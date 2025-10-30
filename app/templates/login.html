@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ app_name }} - 登录</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: radial-gradient(circle at 20% 20%, rgba(59,130,246,0.25), transparent 40%),
+                        radial-gradient(circle at 80% 30%, rgba(14,165,233,0.2), transparent 45%),
+                        radial-gradient(circle at 50% 80%, rgba(34,197,94,0.2), transparent 50%),
+                        #0f172a;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center px-4">
+    <div class="max-w-md w-full bg-white/95 backdrop-blur rounded-2xl shadow-2xl p-8">
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-blue-100 text-blue-600 text-3xl font-bold mb-4">
+                {{ app_name[0] }}
+            </div>
+            <h1 class="text-2xl font-semibold text-slate-900">{{ app_name }}</h1>
+            <p class="text-slate-500 mt-2">统一打印代理控制台</p>
+        </div>
+
+        <form id="login-form" class="space-y-6">
+            <div>
+                <label for="username" class="block text-sm font-medium text-slate-600">用户名</label>
+                <input id="username" name="username" type="text" required
+                       class="mt-2 w-full rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 px-4 py-3 text-slate-800"
+                       placeholder="输入用户名" />
+            </div>
+
+            <div>
+                <label for="password" class="block text-sm font-medium text-slate-600">密码</label>
+                <input id="password" name="password" type="password" required
+                       class="mt-2 w-full rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 px-4 py-3 text-slate-800"
+                       placeholder="输入密码" />
+            </div>
+
+            <div class="flex items-center justify-between text-sm text-slate-500">
+                <label class="inline-flex items-center">
+                    <input id="remember" type="checkbox" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                    <span class="ml-2">保持登录状态</span>
+                </label>
+                <a class="hover:text-blue-600 transition" href="#" onclick="showHint();return false;">忘记密码?</a>
+            </div>
+
+            <button type="submit"
+                    class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-lg shadow-blue-200 transition">
+                立即登录
+            </button>
+        </form>
+
+        <p id="login-message" class="mt-6 text-center text-sm text-red-500 hidden"></p>
+
+        <div class="mt-8 text-center text-xs text-slate-400">
+            如未配置账号，请联系系统管理员开通访问权限。
+        </div>
+    </div>
+
+    <script>
+        const API_PREFIX = "{{ api_prefix }}";
+        const TOKEN_KEY = "pps_token";
+        const USERNAME_KEY = "pps_username";
+
+        if (localStorage.getItem(TOKEN_KEY)) {
+            window.location.href = "/dashboard";
+        }
+
+        document.getElementById("login-form").addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const message = document.getElementById("login-message");
+            message.classList.add("hidden");
+
+            const username = document.getElementById("username").value.trim();
+            const password = document.getElementById("password").value;
+            const remember = document.getElementById("remember").checked;
+
+            const formData = new URLSearchParams();
+            formData.append("username", username);
+            formData.append("password", password);
+            formData.append("grant_type", "password");
+
+            try {
+                const response = await fetch(`${API_PREFIX}/auth/token`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText || "登录失败，请检查账号或密码");
+                }
+
+                const data = await response.json();
+                if (remember) {
+                    localStorage.setItem(TOKEN_KEY, data.access_token);
+                } else {
+                    sessionStorage.setItem(TOKEN_KEY, data.access_token);
+                }
+                localStorage.setItem(USERNAME_KEY, username);
+                window.location.href = "/dashboard";
+            } catch (error) {
+                message.textContent = error.message || "无法连接到服务，请稍后再试";
+                message.classList.remove("hidden");
+            }
+        });
+
+        function showHint() {
+            alert("请联系管理员重置密码或生成新的访问凭证。");
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+.DS_Store
+node_modules/
+dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+**/*.log
+/backend/target/
+
+tests/**/coverage/
+tests/e2e/reports
+selenium-debug.log
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.local
+
+package-lock.json
+yarn.lock
+.bmad-core/
+.spec-workflow/
+.claude/
+.venv_build
+.venv_*
+build
+
+# Configuration files (keep examples)
+.env
+config.yaml
+*.db
+*.db-journal
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Logs
+logs/
+*.log
+.kiro/
+.pytest_cache/
+
+# Build artifacts
+*.exe
+build/
+dist/
+
+# Test databases
+test_*.db
+*.db-journal
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

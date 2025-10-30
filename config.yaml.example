@@ -1,0 +1,76 @@
+# Print Proxy Service Configuration File
+# Copy this file to config.yaml to use YAML configuration
+# Note: Environment variables take precedence over this file
+
+# ============================================
+# Application Settings
+# ============================================
+app:
+  name: "Print Proxy Service"
+  api_prefix: "/api"
+
+# ============================================
+# Server Settings
+# ============================================
+server:
+  # Server host address
+  # - 0.0.0.0: Listen on all network interfaces (accessible from other machines)
+  # - 127.0.0.1: Listen only on localhost (local access only)
+  host: "0.0.0.0"
+  
+  # Server port
+  port: 8568
+  
+  # Enable auto-reload for development
+  reload: false
+  
+  # Number of worker processes
+  workers: 1
+
+# ============================================
+# Database Settings
+# ============================================
+database:
+  # Database connection URL
+  # Default: SQLite database in user AppData directory
+  # url: "sqlite:///./print_proxy.db"
+  
+  # Enable database query logging (for debugging)
+  echo: false
+
+# ============================================
+# Security Settings
+# ============================================
+security:
+  # JWT token expiration time in minutes (default: 7 days = 10080 minutes)
+  access_token_expire_minutes: 10080
+  
+  # JWT algorithm
+  jwt_algorithm: "HS256"
+  
+  # JWT secret key (CHANGE THIS IN PRODUCTION!)
+  jwt_secret_key: "change_me_to_a_random_secret_key_in_production"
+
+# ============================================
+# File and Preview Settings
+# ============================================
+files:
+  # Allowed file formats for preview
+  allowed_preview_formats:
+    - pdf
+    - png
+    - jpg
+    - jpeg
+  
+  # Maximum file size in MB
+  max_file_size_mb: 50
+
+# ============================================
+# Logging Settings
+# ============================================
+logging:
+  # Log directory (leave empty to use default user AppData directory)
+  directory: ""
+  
+  # Logging level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  level: "INFO"

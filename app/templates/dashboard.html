@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ app_name }} 控制台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .menu-item-active {
+            background: linear-gradient(90deg, rgba(59,130,246,0.3), transparent);
+            border-left: 4px solid rgb(37,99,235);
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800">
+    <div class="min-h-screen flex">
+        <aside class="hidden md:flex md:flex-col w-72 bg-slate-950 text-slate-100 shadow-2xl">
+            <div class="px-6 py-8 border-b border-white/5">
+                <div class="flex items-center space-x-3">
+                    <div class="h-12 w-12 rounded-2xl bg-blue-500/20 flex items-center justify-center text-2xl font-semibold text-blue-400">
+                        {{ app_name[0] }}
+                    </div>
+                    <div>
+                        <p class="text-lg font-semibold">{{ app_name }}</p>
+                        <p class="text-xs text-slate-400">Print Proxy Service</p>
+                    </div>
+                </div>
+            </div>
+            <nav class="flex-1 px-4 py-6 space-y-2">
+                <button data-section="overview" class="menu-item flex items-center w-full px-4 py-3 rounded-xl text-left hover:bg-white/5 transition">
+                    <!-- <span class="material-symbols-rounded mr-3 text-slate-300">dashboard</span> -->
+                    总览
+                </button>
+                <button data-section="printers" class="menu-item flex items-center w-full px-4 py-3 rounded-xl text-left hover:bg-white/5 transition">
+                    <!-- <span class="material-symbols-rounded mr-3 text-slate-300">print</span> -->
+                    打印机管理
+                </button>
+                <button data-section="jobs" class="menu-item flex items-center w-full px-4 py-3 rounded-xl text-left hover:bg-white/5 transition">
+                    <!-- <span class="material-symbols-rounded mr-3 text-slate-300">assignment</span> -->
+                    打印任务
+                </button>
+                <button data-section="logs" class="menu-item flex items-center w-full px-4 py-3 rounded-xl text-left hover:bg-white/5 transition">
+                    <!-- <span class="material-symbols-rounded mr-3 text-slate-300">history</span> -->
+                    日志中心
+                </button>
+                <button data-section="apis" class="menu-item flex items-center w-full px-4 py-3 rounded-xl text-left hover:bg-white/5 transition">
+                    <!-- <span class="material-symbols-rounded mr-3 text-slate-300">integration_instructions</span> -->
+                    API 接口
+                </button>
+            </nav>
+            <div class="px-6 py-6 border-t border-white/5">
+                <div class="text-sm text-slate-400">登录账号</div>
+                <div id="sidebar-user" class="mt-2 text-base font-medium text-white truncate">-</div>
+                <button id="logout-btn" class="mt-4 w-full flex items-center justify-center space-x-2 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition text-sm">
+                    <span class="material-symbols-rounded">logout</span>
+                    <span>退出登录</span>
+                </button>
+            </div>
+        </aside>
+
+        <div class="flex-1 flex flex-col">
+            <header class="h-20 bg-white shadow-sm flex items-center justify-between px-6 md:px-10">
+                <div>
+                    <h1 class="text-2xl font-semibold text-slate-900">{{ app_name }} 控制台</h1>
+                    <p class="text-sm text-slate-500">统一管理打印机、打印任务与操作日志</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="hidden sm:flex items-center space-x-3 bg-slate-100 rounded-full px-4 py-1.5">
+                        <span class="material-symbols-rounded text-slate-400">account_circle</span>
+                        <span id="current-user-name" class="text-sm font-medium text-slate-600">-</span>
+                    </div>
+                    <button id="logout-btn-mobile" class="md:hidden inline-flex items-center justify-center h-10 w-10 rounded-full bg-slate-900 text-white">
+                        <span class="material-symbols-rounded">logout</span>
+                    </button>
+                </div>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-6 md:p-10">
+                <div id="global-message" class="hidden mb-6 rounded-xl border px-4 py-3 text-sm"></div>
+                <div id="content" class="space-y-8"></div>
+            </main>
+        </div>
+    </div>
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
+
+    <script>
+        const API_PREFIX = "{{ api_prefix }}";
+        const TOKEN_KEY = "pps_token";
+        const USERNAME_KEY = "pps_username";
+        const ALLOWED_FILE_TYPES = ["pdf", "png", "jpg", "jpeg", "bmp", "txt", "doc", "docx", "xls", "xlsx"];
+        const ALLOWED_IMAGE_TYPES = ["png", "jpg", "jpeg", "bmp"];
+        const API_ROUTES = [
+            { method: "POST", path: "/auth/token", desc: "获取访问令牌", auth: "无" },
+            { method: "POST", path: "/auth/users", desc: "创建用户", auth: "管理员" },
+            { method: "GET", path: "/auth/me", desc: "当前用户信息", auth: "Bearer" },
+            { method: "POST", path: "/auth/users/{id}/api-key", desc: "生成 API Key", auth: "管理员" },
+            { method: "GET", path: "/printers/", desc: "打印机列表", auth: "Bearer" },
+            { method: "POST", path: "/printers/sync", desc: "同步打印机", auth: "管理员" },
+            { method: "PUT", path: "/printers/{id}", desc: "更新打印机", auth: "管理员" },
+            { method: "POST", path: "/printers/{id}/default", desc: "设为默认打印机", auth: "管理员" },
+            { method: "POST", path: "/jobs/", desc: "创建打印任务", auth: "Bearer 或 API Key" },
+            { method: "GET", path: "/jobs/", desc: "任务列表", auth: "Bearer" },
+            { method: "GET", path: "/jobs/{id}", desc: "任务详情", auth: "Bearer" },
+            { method: "PATCH", path: "/jobs/{id}", desc: "更新任务", auth: "任务所有者/管理员" },
+            { method: "POST", path: "/jobs/{id}/cancel", desc: "取消任务", auth: "任务所有者/管理员" },
+            { method: "GET", path: "/jobs/{id}/status", desc: "任务状态", auth: "Bearer" },
+            { method: "GET", path: "/jobs/{id}/preview", desc: "任务预览", auth: "任务所有者/管理员" },
+            { method: "GET", path: "/logs/", desc: "日志查询", auth: "Bearer" },
+        ];
+
+        const state = {
+            token: null,
+            user: null,
+            printers: [],
+            jobs: [],
+            logs: [],
+            logsFilter: null,
+            activeSection: "overview",
+            jobsPage: 1,
+            jobsPerPage: 10,
+            logsPage: 1,
+            logsPerPage: 10,
+        };
+
+        const menuButtons = () => document.querySelectorAll(".menu-item");
+
+        function getToken() {
+            return localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY);
+        }
+
+        function clearToken() {
+            localStorage.removeItem(TOKEN_KEY);
+            sessionStorage.removeItem(TOKEN_KEY);
+            localStorage.removeItem(USERNAME_KEY);
+        }
+
+        function showMessage(text, type = "info") {
+            const box = document.getElementById("global-message");
+            const classes = {
+                info: "border-blue-200 bg-blue-50 text-blue-700",
+                success: "border-emerald-200 bg-emerald-50 text-emerald-700",
+                error: "border-rose-200 bg-rose-50 text-rose-700",
+            };
+            box.className = `mb-6 rounded-xl border px-4 py-3 text-sm ${classes[type] || classes.info}`;
+            box.textContent = text;
+            box.classList.remove("hidden");
+            setTimeout(() => box.classList.add("hidden"), 4200);
+        }
+
+        function logout(silent = false) {
+            clearToken();
+            if (!silent) {
+                showMessage("已退出登录", "info");
+            }
+            setTimeout(() => (window.location.href = "/login"), silent ? 0 : 600);
+        }
+
+        function handleUnauthorized() {
+            showMessage("登录状态已过期，请重新登录", "error");
+            setTimeout(() => logout(true), 1200);
+        }
+
+        async function apiRequest(path, options = {}, expect = "json") {
+            const headers = options.headers ? { ...options.headers } : {};
+            headers["Authorization"] = `Bearer ${state.token}`;
+            if (options.body && !(options.body instanceof FormData)) {
+                headers["Content-Type"] = headers["Content-Type"] || "application/json";
+            }
+            const response = await fetch(`${API_PREFIX}${path}`, { ...options, headers });
+            if (response.status === 401) {
+                handleUnauthorized();
+                throw new Error("未授权");
+            }
+            if (!response.ok) {
+                const text = await response.text();
+                throw new Error(text || "请求失败");
+            }
+            if (response.status === 204) {
+                return null;
+            }
+            if (expect === "text") {
+                return response.text();
+            }
+            if (expect === "blob") {
+                return response.blob();
+            }
+            return response.json();
+        }
+
+        async function loadCurrentUser() {
+            state.user = await apiRequest("/auth/me");
+            document.getElementById("current-user-name").textContent = state.user.full_name || state.user.username;
+            document.getElementById("sidebar-user").textContent = state.user.full_name || state.user.username;
+        }
+
+        async function loadPrinters() {
+            state.printers = await apiRequest("/printers/");
+        }
+
+        async function syncPrinters() {
+            await apiRequest("/printers/sync", { method: "POST" });
+            await loadPrinters();
+            renderPrinters();
+            showMessage("打印机同步完成", "success");
+        }
+
+        async function loadJobs(limit = 100) {
+            state.jobs = await apiRequest(`/jobs?skip=0&limit=${limit}`);
+            state.jobsPage = 1;
+            if (!state.jobsPerPage || state.jobsPerPage <= 0) {
+                state.jobsPerPage = 10;
+            }
+        }
+
+        async function loadLogs(jobId = null) {
+            const query = jobId ? `?job_id=${encodeURIComponent(jobId)}` : "";
+            state.logs = await apiRequest(`/logs/${query}`);
+            state.logsFilter = jobId;
+            state.logsPage = 1;
+            if (!state.logsPerPage || state.logsPerPage <= 0) {
+                state.logsPerPage = 10;
+            }
+        }
+
+        function setActiveNav(section) {
+            menuButtons().forEach((btn) => {
+                if (btn.dataset.section === section) {
+                    btn.classList.add("menu-item-active", "bg-white/5");
+                } else {
+                    btn.classList.remove("menu-item-active", "bg-white/5");
+                }
+            });
+        }
+
+        async function setActiveSection(section) {
+            state.activeSection = section;
+            setActiveNav(section);
+            try {
+                if (section === "overview") {
+                    await Promise.all([loadPrinters(), loadJobs(20)]);
+                    renderOverview();
+                } else if (section === "printers") {
+                    await loadPrinters();
+                    renderPrinters();
+                } else if (section === "jobs") {
+                    await Promise.all([loadPrinters(), loadJobs(100)]);
+                    renderJobs();
+                } else if (section === "logs") {
+                    if (!state.jobs.length) {
+                        await loadJobs(100);
+                    }
+                    await loadLogs(state.logsFilter);
+                    renderLogs();
+                } else if (section === "apis") {
+                    renderApiCatalog();
+                }
+            } catch (error) {
+                showMessage(error.message || "请求失败", "error");
+            }
+        }
+
+        function renderOverview() {
+            const defaultPrinter = state.printers.find((item) => item.is_default);
+            const totalPrinters = state.printers.length;
+            const totalJobs = state.jobs.length;
+            const completedJobs = state.jobs.filter((job) => job.status === "completed").length;
+            const failedJobs = state.jobs.filter((job) => job.status === "failed").length;
+            const processingJobs = state.jobs.filter((job) => ["processing", "queued"].includes(job.status)).length;
+
+            document.getElementById("content").innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                    <div class="bg-white rounded-2xl shadow p-6">
+                        <p class="text-sm text-slate-500">打印机数量</p>
+                        <p class="mt-2 text-3xl font-semibold text-slate-900">${totalPrinters}</p>
+                        <p class="mt-3 text-xs text-slate-400">默认打印机：${defaultPrinter ? defaultPrinter.name : "未设置"}</p>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow p-6">
+                        <p class="text-sm text-slate-500">任务总数</p>
+                        <p class="mt-2 text-3xl font-semibold text-slate-900">${totalJobs}</p>
+                        <p class="mt-3 text-xs text-slate-400">处理中/排队：${processingJobs}</p>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow p-6">
+                        <p class="text-sm text-slate-500">已完成</p>
+                        <p class="mt-2 text-3xl font-semibold text-emerald-600">${completedJobs}</p>
+                        <p class="mt-3 text-xs text-emerald-500">最近完成任务占比 ${(totalJobs ? Math.round((completedJobs / totalJobs) * 100) : 0)}%</p>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow p-6">
+                        <p class="text-sm text-slate-500">失败/异常</p>
+                        <p class="mt-2 text-3xl font-semibold text-rose-600">${failedJobs}</p>
+                        <p class="mt-3 text-xs text-rose-500">请留意错误日志排查原因</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-2xl shadow p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-lg font-semibold">最新打印任务</h2>
+                            <div class="space-x-4 text-sm">
+                                <button class="text-blue-600 hover:text-blue-700" data-section="jobs">任务列表</button>
+                                <button class="text-blue-600 hover:text-blue-700" data-section="apis">API</button>
+                            </div>
+                        </div>
+                        <div class="divide-y divide-slate-100">
+                            ${state.jobs.slice(0, 6).map(job => `
+                                <div class="py-3 flex items-start justify-between">
+                                    <div>
+                                        <p class="font-medium text-slate-800">${job.title}</p>
+                                        <p class="text-xs text-slate-400 mt-1">类型：${job.file_type.toUpperCase()} · 份数：${job.copies}</p>
+                                    </div>
+                                    <span class="text-xs font-medium px-3 py-1 rounded-full ${statusPillClass(job.status)}">${translateStatus(job.status)}</span>
+                                </div>
+                            `).join("") || `<p class="text-sm text-slate-400">暂无打印任务</p>`}
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl shadow p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-lg font-semibold">打印机状态快照</h2>
+                            <button class="text-sm text-blue-600 hover:text-blue-700" data-section="printers">管理打印机</button>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            ${state.printers.slice(0, 4).map(printer => `
+                                <div class="rounded-xl border border-slate-100 p-4">
+                                    <div class="flex items-center justify-between">
+                                        <p class="font-medium text-slate-700">${printer.name}</p>
+                                        ${printer.is_default ? '<span class="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-600">默认</span>' : ''}
+                                    </div>
+                                    <p class="mt-2 text-xs text-slate-400">状态：${printer.status || '未知'}</p>
+                                    ${printer.location ? `<p class="mt-1 text-xs text-slate-400">位置：${printer.location}</p>` : ''}
+                                </div>
+                            `).join("") || `<p class="text-sm text-slate-400">暂无打印机数据</p>`}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.querySelectorAll('[data-section="jobs"], [data-section="printers"]').forEach(btn => {
+                btn.addEventListener('click', () => setActiveSection(btn.dataset.section));
+            });
+        }
+
+        function renderPrinters() {
+            const canManage = state.user?.is_admin;
+            document.getElementById("content").innerHTML = `
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 space-y-4 md:space-y-0">
+                    <div>
+                        <h2 class="text-2xl font-semibold text-slate-900">打印机管理</h2>
+                        <p class="text-sm text-slate-500">查看系统打印机列表并同步状态</p>
+                    </div>
+                    ${canManage ? `<button id="sync-printers" class="inline-flex items-center space-x-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm shadow">
+                        <span class="material-symbols-rounded text-base">sync</span>
+                        <span>同步打印机</span>
+                    </button>` : ''}
+                </div>
+
+                <div class="bg-white rounded-2xl shadow overflow-hidden">
+                    <table class="min-w-full divide-y divide-slate-200">
+                        <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+                            <tr>
+                                <th class="px-6 py-3 text-left">名称</th>
+                                <th class="px-6 py-3 text-left">状态</th>
+                                <th class="px-6 py-3 text-left">位置</th>
+                                <th class="px-6 py-3 text-left">默认</th>
+                                <th class="px-6 py-3 text-left">创建时间</th>
+                                ${canManage ? '<th class="px-6 py-3 text-left">操作</th>' : ''}
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-sm">
+                            ${state.printers.map(printer => `
+                                <tr class="hover:bg-slate-50">
+                                    <td class="px-6 py-3 font-medium text-slate-700">${printer.name}</td>
+                                    <td class="px-6 py-3"><span class="px-3 py-1 text-xs rounded-full ${statusBadgeClass(printer.status)}">${printer.status || '未知'}</span></td>
+                                    <td class="px-6 py-3 text-slate-500">${printer.location || '-'}</td>
+                                    <td class="px-6 py-3">${printer.is_default ? '<span class="text-emerald-600 font-medium">是</span>' : '<span class="text-slate-400">否</span>'}</td>
+                                    <td class="px-6 py-3 text-xs text-slate-400">${formatDate(printer.created_at)}</td>
+                                    ${canManage ? `<td class="px-6 py-3">
+                                        <button class="set-default-printer text-xs ${printer.is_default ? 'text-slate-300 cursor-not-allowed' : 'text-blue-600 hover:text-blue-700'}" data-id="${printer.id}" ${printer.is_default ? 'disabled' : ''}>
+                                            设为默认
+                                        </button>
+                                    </td>` : ''}
+                                </tr>
+                            `).join("") || `<tr><td colspan="${canManage ? 6 : 5}" class="px-6 py-4 text-center text-sm text-slate-400">暂无数据</td></tr>`}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            if (canManage) {
+                document.getElementById("sync-printers").addEventListener("click", async () => {
+                    document.getElementById("sync-printers").disabled = true;
+                    document.getElementById("sync-printers").classList.add("opacity-70");
+                    try {
+                        await syncPrinters();
+                    } catch (error) {
+                        showMessage(error.message || "同步失败", "error");
+                    } finally {
+                        document.getElementById("sync-printers").disabled = false;
+                        document.getElementById("sync-printers").classList.remove("opacity-70");
+                    }
+                });
+
+                document.querySelectorAll(".set-default-printer").forEach((btn) => {
+                    btn.addEventListener("click", async () => {
+                        if (btn.disabled) return;
+                        const printerId = btn.dataset.id;
+                        const originalText = btn.textContent;
+                        btn.disabled = true;
+                        btn.textContent = "处理中...";
+                        try {
+                            await apiRequest(`/printers/${printerId}/default`, { method: "POST" });
+                            await loadPrinters();
+                            renderPrinters();
+                            showMessage("默认打印机已更新", "success");
+                        } catch (error) {
+                            showMessage(error.message || "设置失败", "error");
+                            btn.disabled = false;
+                            btn.textContent = originalText;
+                        }
+                    });
+                });
+            }
+        }
+
+        function renderJobs() {
+            const printerOptions = state.printers.map(printer => `<option value="${printer.name}">${printer.name}</option>`).join("");
+            const totalJobs = state.jobs.length;
+            const pageSize = state.jobsPerPage && state.jobsPerPage > 0 ? state.jobsPerPage : 10;
+            const totalPages = Math.max(1, Math.ceil(totalJobs / pageSize));
+            const currentPage = Math.min(Math.max(state.jobsPage || 1, 1), totalPages);
+            const startIndex = (currentPage - 1) * pageSize;
+            const paginatedJobs = state.jobs.slice(startIndex, startIndex + pageSize);
+            state.jobsPage = currentPage;
+            document.getElementById("content").innerHTML = `
+                <div class="flex flex-col xl:flex-row xl:items-start xl:space-x-6 space-y-6 xl:space-y-0">
+                    <div class="flex-1 bg-white rounded-2xl shadow p-6">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-4 sm:space-y-0">
+                            <div>
+                                <h2 class="text-2xl font-semibold text-slate-900">打印任务</h2>
+                                <p class="text-sm text-slate-500">实时查看任务状态并执行取消操作</p>
+                            </div>
+                            <div class="space-x-2">
+                                <button id="refresh-jobs" class="inline-flex items-center space-x-2 px-4 py-2 rounded-xl bg-slate-900 text-white text-sm">
+                                    <span class="material-symbols-rounded text-base">refresh</span>
+                                    <span>刷新</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-slate-200">
+                                <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left">标题</th>
+                                        <th class="px-4 py-3 text-left">打印机</th>
+                                        <th class="px-4 py-3 text-left">状态</th>
+                                        <th class="px-4 py-3 text-left">份数</th>
+                                        <th class="px-4 py-3 text-left">类型</th>
+                                        <th class="px-4 py-3 text-left">更新时间</th>
+                                        <th class="px-4 py-3 text-left">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 text-sm">
+                                    ${paginatedJobs.map(job => `
+                                        <tr class="hover:bg-slate-50">
+                                            <td class="px-4 py-3">
+                                                <p class="font-medium text-slate-800">${job.title}</p>
+                                                ${job.error_message ? `<p class="mt-1 text-xs text-rose-500">${job.error_message}</p>` : ''}
+                                            </td>
+                                            <td class="px-4 py-3 text-slate-500">${job.printer_name || '-'}</td>
+                                            <td class="px-4 py-3"><span class="px-3 py-1 text-xs rounded-full ${statusPillClass(job.status)}">${translateStatus(job.status)}</span></td>
+                                            <td class="px-4 py-3 text-slate-500">${job.copies}</td>
+                                            <td class="px-4 py-3 text-slate-500 uppercase">${job.file_type}</td>
+                                            <td class="px-4 py-3 text-xs text-slate-400">${formatDate(job.updated_at)}</td>
+                                            <td class="px-4 py-3">
+                                                <div class="flex space-x-2">
+                                                    <button class="preview-job text-xs text-blue-600 hover:text-blue-700" data-id="${job.id}">预览</button>
+                                                    ${["queued", "processing"].includes(job.status) ? `<button class="cancel-job text-xs text-rose-600 hover:text-rose-700" data-id="${job.id}">取消</button>` : ''}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    `).join("") || `<tr><td colspan="7" class="px-4 py-4 text-center text-sm text-slate-400">暂无任务</td></tr>`}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-4 text-sm text-slate-500">
+                            <p>共 ${totalJobs} 条记录，每页 ${pageSize} 条</p>
+                            <div class="flex items-center space-x-2 mt-3 sm:mt-0">
+                                <button id="jobs-prev-page" class="inline-flex items-center px-3 py-1.5 rounded-lg bg-slate-200 text-slate-600 hover:bg-slate-300 disabled:opacity-40 disabled:cursor-not-allowed" ${currentPage === 1 ? "disabled" : ""}>上一页</button>
+                                <span class="text-slate-600">第 ${currentPage} / ${totalPages} 页</span>
+                                <button id="jobs-next-page" class="inline-flex items-center px-3 py-1.5 rounded-lg bg-slate-200 text-slate-600 hover:bg-slate-300 disabled:opacity-40 disabled:cursor-not-allowed" ${currentPage === totalPages || totalJobs === 0 ? "disabled" : ""}>下一页</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="w-full xl:w-96 bg-white rounded-2xl shadow p-6">
+                        <h3 class="text-lg font-semibold text-slate-900">创建打印任务</h3>
+                        <p class="text-xs text-slate-400 mt-1">可上传文件或粘贴 Base64 内容</p>
+                        <form id="job-form" class="mt-6 space-y-4">
+                            <div>
+                                <label class="text-xs text-slate-500">任务标题</label>
+                                <input name="title" type="text" required class="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" placeholder="例如：月报打印" />
+                            </div>
+                            <div>
+                                <label class="text-xs text-slate-500">选择打印机</label>
+                                <select name="printer" class="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                                    <option value="">使用默认打印机</option>
+                                    ${printerOptions}
+                                </select>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="text-xs text-slate-500">文件类型</label>
+                                    <input name="file_type" type="text" required class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" placeholder="pdf/doc/xls/png" />
+                                </div>
+                                <div>
+                                    <label class="text-xs text-slate-500">份数</label>
+                                    <input name="copies" type="number" min="1" value="1" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" />
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-xs text-slate-500">优先级 (1-10)</label>
+                                <input name="priority" type="number" min="1" max="10" value="5" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" />
+                            </div>
+                            <div>
+                                <label class="text-xs text-slate-500">上传文件</label>
+                                <input id="job-file" type="file" class="mt-1 w-full text-sm text-slate-500" />
+                            </div>
+                            <div>
+                                <label class="text-xs text-slate-500">或粘贴 Base64 内容</label>
+                                <textarea name="content" rows="4" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs" placeholder="当未上传文件时，请粘贴 Base64 字符串"></textarea>
+                            </div>
+                            <button type="submit" class="w-full py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm">提交任务</button>
+                            <p id="job-form-message" class="text-xs text-slate-500"></p>
+                        </form>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById("refresh-jobs").addEventListener("click", async () => {
+                try {
+                    await loadJobs(100);
+                    renderJobs();
+                    showMessage("任务列表已刷新", "success");
+                } catch (error) {
+                    showMessage(error.message || "刷新失败", "error");
+                }
+            });
+
+            document.querySelectorAll(".cancel-job").forEach((btn) => {
+                btn.addEventListener("click", async () => {
+                    try {
+                        await apiRequest(`/jobs/${btn.dataset.id}/cancel`, { method: "POST" });
+                        await loadJobs(100);
+                        renderJobs();
+                        showMessage("任务已取消", "success");
+                    } catch (error) {
+                        showMessage(error.message || "取消失败", "error");
+                    }
+                });
+            });
+
+            document.querySelectorAll(".preview-job").forEach((btn) => {
+                btn.addEventListener("click", async () => {
+                    try {
+                        const base64 = await apiRequest(`/jobs/${btn.dataset.id}/preview`, {}, "text");
+                        const w = window.open("");
+                        if (w) {
+                            w.document.write(`<img src="data:image/png;base64,${base64}" style="max-width:100%;height:auto;" alt="预览" />`);
+                        }
+                    } catch (error) {
+                        showMessage(error.message || "预览失败", "error");
+                    }
+                });
+            });
+
+            const prevBtn = document.getElementById("jobs-prev-page");
+            if (prevBtn) {
+                prevBtn.addEventListener("click", () => {
+                    if (state.jobsPage > 1) {
+                        state.jobsPage -= 1;
+                        renderJobs();
+                    }
+                });
+            }
+
+            const nextBtn = document.getElementById("jobs-next-page");
+            if (nextBtn) {
+                nextBtn.addEventListener("click", () => {
+                    const size = state.jobsPerPage && state.jobsPerPage > 0 ? state.jobsPerPage : 10;
+                    const maxPage = Math.max(1, Math.ceil(state.jobs.length / size));
+                    if (state.jobsPage < maxPage) {
+                        state.jobsPage += 1;
+                        renderJobs();
+                    }
+                });
+            }
+
+            const jobForm = document.getElementById("job-form");
+            const jobFileInput = document.getElementById("job-file");
+            const fileTypeInput = jobForm.querySelector('input[name="file_type"]');
+            const titleInput = jobForm.querySelector('input[name="title"]');
+
+            jobFileInput.addEventListener("change", () => handleFileSelection(jobFileInput, fileTypeInput, titleInput));
+
+            jobForm.addEventListener("submit", async (event) => {
+                event.preventDefault();
+                const formData = new FormData(jobForm);
+                const file = jobFileInput.files[0];
+                const messageEl = document.getElementById("job-form-message");
+                messageEl.textContent = "正在提交任务...";
+                messageEl.className = "text-xs text-slate-500";
+
+                try {
+                    let contentBase64 = formData.get("content").trim();
+                    if (file) {
+                        contentBase64 = await fileToBase64(file);
+                    }
+                    if (!contentBase64) {
+                        throw new Error("请上传文件或粘贴 Base64 内容");
+                    }
+
+                    const payload = {
+                        title: formData.get("title").trim(),
+                        printer_name: formData.get("printer") || null,
+                        file_type: formData.get("file_type").trim().toLowerCase(),
+                        copies: Number(formData.get("copies")) || 1,
+                        priority: Number(formData.get("priority")) || 5,
+                        content_base64: contentBase64,
+                    };
+
+                    if (!ALLOWED_FILE_TYPES.includes(payload.file_type)) {
+                        throw new Error("文件类型仅支持 PDF、TXT 以及 PNG/JPG/BMP 图片");
+                    }
+
+                    await apiRequest("/jobs", {
+                        method: "POST",
+                        body: JSON.stringify(payload),
+                    });
+
+                    jobForm.reset();
+                    fileTypeInput.readOnly = false;
+                    fileTypeInput.value = "";
+                    jobFileInput.value = "";
+                    await loadJobs(100);
+                    renderJobs();
+                    showMessage("任务已创建并进入队列", "success");
+                } catch (error) {
+                    messageEl.textContent = error.message || "创建任务失败";
+                    messageEl.className = "text-xs text-rose-500";
+                    return;
+                }
+                messageEl.textContent = "任务创建成功";
+                messageEl.className = "text-xs text-emerald-500";
+            });
+        }
+
+        function renderLogs() {
+            const jobOptions = ["<option value=''>全部任务</option>", ...state.jobs.map(job => `<option value="${job.id}" ${state.logsFilter == job.id ? 'selected' : ''}>${job.title} (#${job.id})</option>`)].join("");
+            const totalLogs = state.logs.length;
+            const pageSize = state.logsPerPage && state.logsPerPage > 0 ? state.logsPerPage : 10;
+            const totalPages = Math.max(1, Math.ceil(totalLogs / pageSize));
+            const currentPage = Math.min(Math.max(state.logsPage || 1, 1), totalPages);
+            const startIndex = (currentPage - 1) * pageSize;
+            const paginatedLogs = state.logs.slice(startIndex, startIndex + pageSize);
+            state.logsPage = currentPage;
+            document.getElementById("content").innerHTML = `
+                <div class="bg-white rounded-2xl shadow p-6">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 space-y-4 md:space-y-0">
+                        <div>
+                            <h2 class="text-2xl font-semibold text-slate-900">日志中心</h2>
+                            <p class="text-sm text-slate-500">查看打印任务执行记录与异常</p>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <select id="log-filter" class="rounded-xl border border-slate-200 px-4 py-2 text-sm">
+                                ${jobOptions}
+                            </select>
+                            <button id="refresh-logs" class="inline-flex items-center space-x-2 px-4 py-2 rounded-xl bg-slate-900 text-white text-sm">
+                                <span class="material-symbols-rounded text-base">refresh</span>
+                                <span>刷新</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        ${paginatedLogs.map(log => `
+                            <div class="border border-slate-100 rounded-xl px-4 py-3">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm font-medium text-slate-700">任务 #${log.job_id}</span>
+                                    <span class="text-xs text-slate-400">${formatDate(log.created_at)}</span>
+                                </div>
+                                <p class="mt-2 text-sm ${log.level === 'error' ? 'text-rose-600' : log.level === 'warning' ? 'text-amber-600' : 'text-slate-600'}">${log.message}</p>
+                            </div>
+                        `).join("") || `<p class="text-sm text-slate-400">暂无日志记录</p>`}
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-6 text-sm text-slate-500">
+                        <p>共 ${totalLogs} 条记录，每页 ${pageSize} 条</p>
+                        <div class="flex items-center space-x-2 mt-3 sm:mt-0">
+                            <button id="logs-prev-page" class="inline-flex items-center px-3 py-1.5 rounded-lg bg-slate-200 text-slate-600 hover:bg-slate-300 disabled:opacity-40 disabled:cursor-not-allowed" ${currentPage === 1 ? "disabled" : ""}>上一页</button>
+                            <span class="text-slate-600">第 ${currentPage} / ${totalPages} 页</span>
+                            <button id="logs-next-page" class="inline-flex items-center px-3 py-1.5 rounded-lg bg-slate-200 text-slate-600 hover:bg-slate-300 disabled:opacity-40 disabled:cursor-not-allowed" ${currentPage === totalPages || totalLogs === 0 ? "disabled" : ""}>下一页</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById("log-filter").addEventListener("change", async (event) => {
+                try {
+                    await loadLogs(event.target.value || null);
+                    renderLogs();
+                } catch (error) {
+                    showMessage(error.message || "日志加载失败", "error");
+                }
+            });
+
+            document.getElementById("refresh-logs").addEventListener("click", async () => {
+                try {
+                    await loadLogs(state.logsFilter);
+                    renderLogs();
+                    showMessage("日志已刷新", "success");
+                } catch (error) {
+                    showMessage(error.message || "刷新失败", "error");
+                }
+            });
+
+            const logsPrevBtn = document.getElementById("logs-prev-page");
+            if (logsPrevBtn) {
+                logsPrevBtn.addEventListener("click", () => {
+                    if (state.logsPage > 1) {
+                        state.logsPage -= 1;
+                        renderLogs();
+                    }
+                });
+            }
+
+            const logsNextBtn = document.getElementById("logs-next-page");
+            if (logsNextBtn) {
+                logsNextBtn.addEventListener("click", () => {
+                    const size = state.logsPerPage && state.logsPerPage > 0 ? state.logsPerPage : 10;
+                    const maxPage = Math.max(1, Math.ceil(state.logs.length / size));
+                    if (state.logsPage < maxPage) {
+                        state.logsPage += 1;
+                        renderLogs();
+                    }
+                });
+            }
+        }
+
+        function renderApiCatalog() {
+            document.getElementById("content").innerHTML = `
+                <div class="bg-white rounded-2xl shadow p-6">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 space-y-4 md:space-y-0">
+                        <div>
+                            <h2 class="text-2xl font-semibold text-slate-900">API 接口列表</h2>
+                            <p class="text-sm text-slate-500">参考接口文档或访问 <a href="/docs" target="_blank" class="text-blue-600 hover:text-blue-700">/docs</a> 获取 Swagger</p>
+                        </div>
+                        <a href="/docs" target="_blank" class="inline-flex items-center space-x-2 px-4 py-2 rounded-xl bg-slate-900 text-white text-sm">
+                            <span class="material-symbols-rounded text-base">open_in_new</span>
+                            <span>打开 Swagger</span>
+                        </a>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-slate-200">
+                            <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+                                <tr>
+                                    <th class="px-4 py-3 text-left">方法</th>
+                                    <th class="px-4 py-3 text-left">路径</th>
+                                    <th class="px-4 py-3 text-left">描述</th>
+                                    <th class="px-4 py-3 text-left">认证</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-sm">
+                                ${API_ROUTES.map(route => `
+                                    <tr class="hover:bg-slate-50">
+                                        <td class="px-4 py-3">
+                                            <span class="px-3 py-1 text-xs rounded-full ${methodBadgeClass(route.method)}">${route.method}</span>
+                                        </td>
+                                        <td class="px-4 py-3 font-mono text-xs text-slate-600">${route.path}</td>
+                                        <td class="px-4 py-3 text-slate-600">${route.desc}</td>
+                                        <td class="px-4 py-3 text-slate-500">${route.auth}</td>
+                                    </tr>
+                                `).join("")}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function handleFileSelection(fileInput, fileTypeInput, titleInput) {
+            const file = fileInput.files[0];
+            const messageEl = document.getElementById("job-form-message");
+            if (messageEl) {
+                messageEl.textContent = "";
+                messageEl.className = "text-xs text-slate-500";
+            }
+
+            if (!file) {
+                fileTypeInput.readOnly = false;
+                return;
+            }
+
+            const extensionMatch = file.name.toLowerCase().match(/\.([a-z0-9]+)$/);
+            const ext = extensionMatch ? extensionMatch[1] : "";
+
+            if (!ALLOWED_FILE_TYPES.includes(ext) || !isMimeAllowed(file.type, ext)) {
+                if (messageEl) {
+                messageEl.textContent = "仅支持上传 PDF、Word、Excel、TXT 及 PNG/JPG/BMP 图片文件";
+                    messageEl.className = "text-xs text-rose-500";
+                }
+                fileInput.value = "";
+                fileTypeInput.value = "";
+                fileTypeInput.readOnly = false;
+                return;
+            }
+
+            if (!titleInput.value.trim()) {
+                titleInput.value = file.name.replace(/\.[^.]+$/, "");
+            }
+
+            fileTypeInput.value = ext;
+            fileTypeInput.readOnly = true;
+        }
+
+        function isMimeAllowed(mimeType, ext) {
+            if (!mimeType) {
+                return ALLOWED_FILE_TYPES.includes(ext);
+            }
+
+            const normalized = mimeType.toLowerCase();
+
+            if (normalized === "application/pdf") {
+                return ext === "pdf";
+            }
+
+            if (normalized === "text/plain") {
+                return ext === "txt";
+            }
+
+            const wordTypes = [
+                "application/msword",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ];
+            if (wordTypes.includes(normalized)) {
+                return ["doc", "docx"].includes(ext);
+            }
+
+            const excelTypes = [
+                "application/vnd.ms-excel",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            ];
+            if (excelTypes.includes(normalized)) {
+                return ["xls", "xlsx"].includes(ext);
+            }
+
+            if (normalized.startsWith("image/")) {
+                if (normalized.includes("png")) {
+                    return ext === "png";
+                }
+                if (normalized.includes("jpeg") || normalized.includes("jpg")) {
+                    return ["jpg", "jpeg"].includes(ext);
+                }
+                if (normalized.includes("bmp")) {
+                    return ext === "bmp";
+                }
+                return ALLOWED_IMAGE_TYPES.includes(ext);
+            }
+
+            return false;
+        }
+
+        function statusPillClass(status) {
+            const map = {
+                completed: "bg-emerald-100 text-emerald-600",
+                failed: "bg-rose-100 text-rose-600",
+                cancelled: "bg-slate-200 text-slate-600",
+                processing: "bg-amber-100 text-amber-600",
+                queued: "bg-blue-100 text-blue-600",
+            };
+            return map[status] || "bg-slate-100 text-slate-500";
+        }
+
+        function methodBadgeClass(method) {
+            const colors = {
+                GET: "bg-blue-100 text-blue-600",
+                POST: "bg-emerald-100 text-emerald-600",
+                PUT: "bg-amber-100 text-amber-600",
+                PATCH: "bg-purple-100 text-purple-600",
+                DELETE: "bg-rose-100 text-rose-600",
+            };
+            return colors[method] || "bg-slate-100 text-slate-500";
+        }
+
+        function statusBadgeClass(status) {
+            const map = {
+                online: "bg-emerald-100 text-emerald-600",
+                offline: "bg-rose-100 text-rose-600",
+                unknown: "bg-slate-100 text-slate-500",
+            };
+            return map[String(status).toLowerCase()] || "bg-blue-100 text-blue-600";
+        }
+
+        function translateStatus(status) {
+            const map = {
+                completed: "已完成",
+                failed: "失败",
+                cancelled: "已取消",
+                processing: "处理中",
+                queued: "排队中",
+            };
+            return map[status] || status;
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return "-";
+            const date = new Date(dateString);
+            if (Number.isNaN(date.getTime())) return dateString;
+            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")} ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+        }
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const result = reader.result.split(",")[1];
+                    resolve(result);
+                };
+                reader.onerror = () => reject(new Error("文件读取失败"));
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function setupNavigation() {
+            menuButtons().forEach((button) => {
+                button.addEventListener("click", () => setActiveSection(button.dataset.section));
+            });
+        }
+
+        function setupLogout() {
+            document.getElementById("logout-btn").addEventListener("click", () => logout());
+            document.getElementById("logout-btn-mobile").addEventListener("click", () => logout());
+        }
+
+        async function initDashboard() {
+            state.token = getToken();
+            if (!state.token) {
+                logout(true);
+                return;
+            }
+
+            setupNavigation();
+            setupLogout();
+
+            try {
+                await loadCurrentUser();
+                setActiveSection("overview");
+            } catch (error) {
+                showMessage(error.message || "初始化失败", "error");
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", initDashboard);
+    </script>
+</body>
+</html>
