@@ -23,7 +23,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/dashboard',
     name: 'dashboard',
-    component: () => import('@/views/HomeView.vue'), // 暂时使用现有组件
+    component: () => import('@/views/DashboardView.vue'),
     meta: {
       title: '总览',
       icon: 'dashboard',
@@ -33,7 +33,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/printers',
     name: 'printers',
-    component: () => import('@/views/HomeView.vue'), // 暂时使用现有组件
+    component: () => import('@/views/PrintersView.vue'),
     meta: {
       title: '打印机管理',
       icon: 'printer',
@@ -43,7 +43,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/jobs',
     name: 'jobs',
-    component: () => import('@/views/HomeView.vue'), // 暂时使用现有组件
+    component: () => import('@/views/JobsView.vue'),
     meta: {
       title: '打印任务',
       icon: 'tasks',
@@ -53,7 +53,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/logs',
     name: 'logs',
-    component: () => import('@/views/HomeView.vue'), // 暂时使用现有组件
+    component: () => import('@/views/LogsView.vue'),
     meta: {
       title: '日志查看',
       icon: 'logs',

@@ -36,6 +36,14 @@ export type StatusType =
   | 'pending'
   | 'paused'
   | 'cancelled'
+  // 打印机状态
+  | 'online'
+  | 'offline'
+  | 'busy'
+  // 任务状态
+  | 'printing'
+  | 'completed'
+  | 'failed'
 
 export type StatusSize = 'small' | 'medium' | 'large'
 
@@ -65,7 +73,15 @@ const tagType = computed(() => {
     processing: 'info',
     pending: 'default',
     paused: 'warning',
-    cancelled: 'error'
+    cancelled: 'error',
+    // 打印机状态
+    online: 'success',
+    offline: 'error',
+    busy: 'warning',
+    // 任务状态
+    printing: 'info',
+    completed: 'success',
+    failed: 'error'
   }
   return typeMap[props.status] as any
 })
@@ -80,7 +96,15 @@ const statusIcon = computed(() => {
     processing: SyncOutlined,
     pending: ClockCircleOutlined,
     paused: PauseCircleOutlined,
-    cancelled: CloseCircleOutlined
+    cancelled: CloseCircleOutlined,
+    // 打印机状态
+    online: CheckCircleOutlined,
+    offline: CloseCircleOutlined,
+    busy: SyncOutlined,
+    // 任务状态
+    printing: SyncOutlined,
+    completed: CheckCircleOutlined,
+    failed: CloseCircleOutlined
   }
   return iconMap[props.status]
 })
@@ -99,7 +123,15 @@ const displayText = computed(() => {
     processing: '处理中',
     pending: '等待中',
     paused: '已暂停',
-    cancelled: '已取消'
+    cancelled: '已取消',
+    // 打印机状态
+    online: '在线',
+    offline: '离线',
+    busy: '忙碌',
+    // 任务状态
+    printing: '打印中',
+    completed: '已完成',
+    failed: '失败'
   }
   return textMap[props.status]
 })
@@ -109,7 +141,7 @@ const customClass = computed(() => {
   const classes = []
   
   // 处理中状态添加动画
-  if (props.status === 'processing') {
+  if (['processing', 'printing', 'busy'].includes(props.status)) {
     classes.push('animate-pulse')
   }
   
