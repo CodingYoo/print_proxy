@@ -1,5 +1,13 @@
 <script setup lang="ts">
-import { NConfigProvider, NMessageProvider, NNotificationProvider, NDialogProvider, NLoadingBarProvider } from 'naive-ui'
+import { onMounted } from 'vue'
+import { NConfigProvider, NMessageProvider, NNotificationProvider, NDialogProvider, NLoadingBarProvider, useMessage } from 'naive-ui'
+import { setMessageInstance } from '@/api/client'
+
+// 在组件挂载后设置消息实例
+onMounted(() => {
+  const message = useMessage()
+  setMessageInstance(message)
+})
 </script>
 
 <template>
