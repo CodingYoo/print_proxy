@@ -36,6 +36,9 @@ class Settings(BaseSettings):
     server_reload: bool = Field(default=False, description="Enable auto-reload for development")
     server_workers: int = Field(default=1, description="Number of worker processes")
     
+    # Frontend settings
+    frontend_dist_path: str = Field(default="frontend/frontend-app/dist", description="Path to built frontend static files")
+    
     # Database settings
     database_url: str = Field(default="")
     database_echo: bool = Field(default=False)

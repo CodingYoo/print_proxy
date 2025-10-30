@@ -25,7 +25,10 @@ def create_application() -> FastAPI:
         allow_credentials=True,
     )
 
+    # 重要：先注册 API 路由，确保 API 请求不会被前端路由捕获
     app.include_router(api_router, prefix=settings.api_prefix)
+    
+    # 最后注册前端路由（包含通配符路由）
     app.include_router(web_router)
 
     @app.on_event("startup")
