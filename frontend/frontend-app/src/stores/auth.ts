@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
-import apiClient from '@/api/client'
+import { authApi } from '@/api/services/auth'
 
 // 定义用户接口
 export interface User {
@@ -50,27 +50,27 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null
 
     try {
-      const response = await apiClient.post('/auth/login', credentials)
-      const { access_token, user: userData } = response.data
+      const response = await authApi.login(credentials)
+      const { access_token } = response.data
 
-      // 存储 token 和用户信息
+      // 存储 token
       token.value = access_token
-      user.value = userData
       
       // 根据"记住我"选项决定存储位置
       if (credentials.remember) {
         // 使用 localStorage 实现持久化存储
         localStorage.setItem('auth_token', access_token)
-        localStorage.setItem('user_info', JSON.stringify(userData))
         localStorage.setItem('remember_me', 'true')
       } else {
         // 使用 sessionStorage 仅在会话期间保存
         sessionStorage.setItem('auth_token', access_token)
-        sessionStorage.setItem('user_info', JSON.stringify(userData))
         localStorage.removeItem('remember_me')
       }
 
-      return userData
+      // 获取用户信息
+      await getCurrentUser()
+
+      return user.value
     } catch (err: any) {
       error.value = err.response?.data?.detail || '登录失败'
       throw err
@@ -98,7 +98,7 @@ export const useAuthStore = defineStore('auth', () => {
     if (!token.value) return
 
     try {
-      const response = await apiClient.post('/auth/refresh')
+      const response = await authApi.refreshToken()
       const { access_token } = response.data
       
       token.value = access_token
@@ -126,7 +126,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     try {
-      const response = await apiClient.get('/auth/me')
+      const response = await authApi.getCurrentUser()
       user.value = response.data
       
       // 根据是否记住我来决定存储位置

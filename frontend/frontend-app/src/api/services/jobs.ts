@@ -5,12 +5,12 @@ import type { PrintJob, JobsQueryParams } from '@/stores/jobs'
 export const jobsApi = {
   // 获取任务列表
   getList: (params?: JobsQueryParams) => {
-    return apiClient.get('/jobs', { params })
+    return apiClient.get('/api/jobs', { params })
   },
 
   // 获取任务详情
   getById: (id: string) => {
-    return apiClient.get(`/jobs/${id}`)
+    return apiClient.get(`/api/jobs/${id}`)
   },
 
   // 提交打印任务
@@ -37,7 +37,7 @@ export const jobsApi = {
       formData.append('settings', JSON.stringify(data.settings))
     }
 
-    return apiClient.post('/jobs', formData, {
+    return apiClient.post('/api/jobs', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
@@ -46,64 +46,64 @@ export const jobsApi = {
 
   // 取消任务
   cancel: (id: string) => {
-    return apiClient.post(`/jobs/${id}/cancel`)
+    return apiClient.post(`/api/jobs/${id}/cancel`)
   },
 
   // 重新提交任务
   resubmit: (id: string) => {
-    return apiClient.post(`/jobs/${id}/resubmit`)
+    return apiClient.post(`/api/jobs/${id}/resubmit`)
   },
 
   // 删除任务
   delete: (id: string) => {
-    return apiClient.delete(`/jobs/${id}`)
+    return apiClient.delete(`/api/jobs/${id}`)
   },
 
   // 暂停任务
   pause: (id: string) => {
-    return apiClient.post(`/jobs/${id}/pause`)
+    return apiClient.post(`/api/jobs/${id}/pause`)
   },
 
   // 恢复任务
   resume: (id: string) => {
-    return apiClient.post(`/jobs/${id}/resume`)
+    return apiClient.post(`/api/jobs/${id}/resume`)
   },
 
   // 获取任务进度
   getProgress: (id: string) => {
-    return apiClient.get(`/jobs/${id}/progress`)
+    return apiClient.get(`/api/jobs/${id}/progress`)
   },
 
   // 获取任务预览
   getPreview: (id: string) => {
-    return apiClient.get(`/jobs/${id}/preview`, {
+    return apiClient.get(`/api/jobs/${id}/preview`, {
       responseType: 'blob'
     })
   },
 
   // 下载任务文件
   downloadFile: (id: string) => {
-    return apiClient.get(`/jobs/${id}/download`, {
+    return apiClient.get(`/api/jobs/${id}/download`, {
       responseType: 'blob'
     })
   },
 
   // 批量操作
   batchCancel: (jobIds: string[]) => {
-    return apiClient.post('/jobs/batch-cancel', { job_ids: jobIds })
+    return apiClient.post('/api/jobs/batch-cancel', { job_ids: jobIds })
   },
 
   batchDelete: (jobIds: string[]) => {
-    return apiClient.post('/jobs/batch-delete', { job_ids: jobIds })
+    return apiClient.post('/api/jobs/batch-delete', { job_ids: jobIds })
   },
 
   batchResubmit: (jobIds: string[]) => {
-    return apiClient.post('/jobs/batch-resubmit', { job_ids: jobIds })
+    return apiClient.post('/api/jobs/batch-resubmit', { job_ids: jobIds })
   },
 
   // 获取任务统计信息
   getStats: (params?: Partial<JobsQueryParams>) => {
-    return apiClient.get('/jobs/stats', { params })
+    return apiClient.get('/api/jobs/stats', { params })
   },
 
   // 获取任务历史
@@ -115,12 +115,12 @@ export const jobsApi = {
     page?: number
     pageSize?: number
   }) => {
-    return apiClient.get('/jobs/history', { params })
+    return apiClient.get('/api/jobs/history', { params })
   },
 
   // 导出任务数据
   export: (params?: JobsQueryParams & { format?: 'csv' | 'excel' }) => {
-    return apiClient.get('/jobs/export', {
+    return apiClient.get('/api/jobs/export', {
       params,
       responseType: 'blob'
     })

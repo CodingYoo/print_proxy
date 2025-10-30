@@ -18,10 +18,10 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/',
-    name: 'home',
-    component: LazyRoutes.HomeView,
-    meta: {
-      title: '首页'
+    redirect: () => {
+      // 根据登录状态重定向
+      const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token')
+      return token ? '/dashboard' : '/login'
     }
   },
   {
