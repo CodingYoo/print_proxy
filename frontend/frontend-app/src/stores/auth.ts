@@ -21,7 +21,9 @@ export interface LoginCredentials {
 // 定义认证状态 store
 export const useAuthStore = defineStore('auth', () => {
   // 状态
-  const token = ref<string | null>(localStorage.getItem('auth_token'))
+  const token = ref<string | null>(
+    localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token')
+  )
   const user = ref<User | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
@@ -31,7 +33,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   // 初始化用户信息
   const initializeAuth = () => {
-    const storedUser = localStorage.getItem('user_info')
+    const storedUser = localStorage.getItem('user_info') || sessionStorage.getItem('user_info')
     if (storedUser && token.value) {
       try {
         user.value = JSON.parse(storedUser)
@@ -54,8 +56,19 @@ export const useAuthStore = defineStore('auth', () => {
       // 存储 token 和用户信息
       token.value = access_token
       user.value = userData
-      localStorage.setItem('auth_token', access_token)
-      localStorage.setItem('user_info', JSON.stringify(userData))
+      
+      // 根据"记住我"选项决定存储位置
+      if (credentials.remember) {
+        // 使用 localStorage 实现持久化存储
+        localStorage.setItem('auth_token', access_token)
+        localStorage.setItem('user_info', JSON.stringify(userData))
+        localStorage.setItem('remember_me', 'true')
+      } else {
+        // 使用 sessionStorage 仅在会话期间保存
+        sessionStorage.setItem('auth_token', access_token)
+        sessionStorage.setItem('user_info', JSON.stringify(userData))
+        localStorage.removeItem('remember_me')
+      }
 
       return userData
     } catch (err: any) {
@@ -71,8 +84,13 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = null
     user.value = null
     error.value = null
+    
+    // 清除所有存储的认证信息
     localStorage.removeItem('auth_token')
     localStorage.removeItem('user_info')
+    localStorage.removeItem('remember_me')
+    sessionStorage.removeItem('auth_token')
+    sessionStorage.removeItem('user_info')
   }
 
   // 刷新 token
@@ -84,7 +102,14 @@ export const useAuthStore = defineStore('auth', () => {
       const { access_token } = response.data
       
       token.value = access_token
-      localStorage.setItem('auth_token', access_token)
+      
+      // 根据是否记住我来决定存储位置
+      const rememberMe = localStorage.getItem('remember_me') === 'true'
+      if (rememberMe) {
+        localStorage.setItem('auth_token', access_token)
+      } else {
+        sessionStorage.setItem('auth_token', access_token)
+      }
       
       return access_token
     } catch (err) {
@@ -103,7 +128,15 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const response = await apiClient.get('/auth/me')
       user.value = response.data
-      localStorage.setItem('user_info', JSON.stringify(response.data))
+      
+      // 根据是否记住我来决定存储位置
+      const rememberMe = localStorage.getItem('remember_me') === 'true'
+      if (rememberMe) {
+        localStorage.setItem('user_info', JSON.stringify(response.data))
+      } else {
+        sessionStorage.setItem('user_info', JSON.stringify(response.data))
+      }
+      
       return response.data
     } catch (err) {
       console.error('Failed to get current user:', err)

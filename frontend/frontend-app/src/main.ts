@@ -5,6 +5,7 @@ import App from './App.vue'
 import router from './router'
 import { naive } from './naive-ui'
 import { setupApp, initializeAuth } from './utils/app-setup'
+import { permissionDirective, roleDirective } from './directives/permission'
 import './style.css'
 
 const app = createApp(App)
@@ -13,6 +14,10 @@ const app = createApp(App)
 app.use(createPinia())
 app.use(router)
 app.use(naive)
+
+// 注册全局指令
+app.directive('permission', permissionDirective)
+app.directive('role', roleDirective)
 
 // 应用设置
 setupApp(app)

@@ -60,7 +60,7 @@ apiClient.interceptors.request.use(
     
     // 添加认证 token
     if (!(config as any).skipAuth) {
-      const token = localStorage.getItem('auth_token')
+      const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token')
       if (token) {
         config.headers.Authorization = `Bearer ${token}`
       }
@@ -159,6 +159,9 @@ apiClient.interceptors.response.use(
         // 未授权 - 清除认证信息并重定向到登录页
         localStorage.removeItem('auth_token')
         localStorage.removeItem('user_info')
+        localStorage.removeItem('remember_me')
+        sessionStorage.removeItem('auth_token')
+        sessionStorage.removeItem('user_info')
         
         // 避免在登录页面重复重定向
         if (window.location.pathname !== '/login') {
