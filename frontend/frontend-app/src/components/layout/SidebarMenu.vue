@@ -1,24 +1,25 @@
 <template>
-  <div class="h-full flex flex-col">
+  <div class="h-full flex flex-col sidebar-container">
     <!-- Logo 区域 -->
-    <div class="h-16 flex items-center justify-center border-b border-gray-200 dark:border-gray-700">
-      <div v-if="!collapsed" class="flex items-center space-x-2">
-        <n-icon size="24" color="#18a058">
-          <PrinterIcon />
-        </n-icon>
-        <span class="text-lg font-semibold text-gray-800 dark:text-gray-200">
-          打印代理
-        </span>
+    <div class="logo-area">
+      <div v-if="!collapsed" class="logo-expanded">
+        <div class="logo-circle">
+          <span class="logo-text">P</span>
+        </div>
+        <div class="logo-info">
+          <h2 class="logo-title">Print Proxy Service</h2>
+          <p class="logo-subtitle">Print Proxy Service</p>
+        </div>
       </div>
-      <div v-else class="flex items-center justify-center">
-        <n-icon size="24" color="#18a058">
-          <PrinterIcon />
-        </n-icon>
+      <div v-else class="logo-collapsed">
+        <div class="logo-circle-small">
+          <span class="logo-text-small">P</span>
+        </div>
       </div>
     </div>
 
     <!-- 菜单项 -->
-    <div class="flex-1 py-4 overflow-y-auto">
+    <div class="flex-1 py-4 overflow-y-auto menu-container">
       <n-menu
         :collapsed="collapsed"
         :collapsed-width="64"
@@ -31,9 +32,19 @@
     </div>
 
     <!-- 底部信息 -->
-    <div v-if="!collapsed" class="p-4 border-t border-gray-200 dark:border-gray-700">
-      <div class="text-xs text-gray-500 dark:text-gray-400 text-center">
-        版本 v1.0.0
+    <div v-if="!collapsed" class="sidebar-footer">
+      <div class="footer-user">
+        <div class="user-avatar">
+          <n-icon size="16" color="#ffffff">
+            <UserIcon />
+          </n-icon>
+        </div>
+        <div class="user-info">
+          <p class="user-name">{{ currentUser }}</p>
+          <n-button text size="tiny" class="logout-btn" @click="handleLogout">
+            logout 退出登录
+          </n-button>
+        </div>
       </div>
     </div>
   </div>
@@ -42,15 +53,16 @@
 <script setup lang="ts">
 import { ref, computed, h } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { NIcon } from 'naive-ui'
+import { NIcon, useMessage } from 'naive-ui'
 import {
   DashboardOutlined as DashboardIcon,
   PrinterOutlined as PrinterIcon,
   FileTextOutlined as JobsIcon,
   UnorderedListOutlined as LogsIcon,
   ApiOutlined as ApiIcon,
-  SettingOutlined as SettingsIcon
+  UserOutlined as UserIcon
 } from '@vicons/antd'
+import { useAuthStore } from '@/stores/auth'
 
 interface Props {
   collapsed: boolean
@@ -67,9 +79,14 @@ const emit = defineEmits<{
 
 const router = useRouter()
 const route = useRoute()
+const message = useMessage()
+const authStore = useAuthStore()
 
 // 当前激活的菜单项
 const activeKey = computed(() => route.name as string)
+
+// 当前用户
+const currentUser = computed(() => authStore.user?.username || 'System Administrator')
 
 // 渲染图标的辅助函数
 const renderIcon = (icon: any) => {
@@ -94,22 +111,14 @@ const menuOptions = computed(() => [
     icon: renderIcon(JobsIcon)
   },
   {
-    label: '日志查看',
+    label: '日志中心',
     key: 'logs',
     icon: renderIcon(LogsIcon)
   },
   {
-    label: 'API 文档',
+    label: 'API 接口',
     key: 'api-docs',
     icon: renderIcon(ApiIcon)
-  },
-  {
-    type: 'divider'
-  },
-  {
-    label: '设置',
-    key: 'settings',
-    icon: renderIcon(SettingsIcon)
   }
 ])
 
@@ -118,25 +127,203 @@ const handleMenuSelect = (key: string) => {
   router.push({ name: key })
   emit('menuClick')
 }
+
+// 处理登出
+const handleLogout = async () => {
+  try {
+    await authStore.logout()
+    message.success('已退出登录')
+    router.push({ name: 'login' })
+  } catch (error) {
+    console.error('Logout error:', error)
+    message.error('退出登录失败')
+  }
+}
 </script>
 
 <style scoped>
+.sidebar-container {
+  background: #1a1f2e;
+}
+
+/* Logo 区域样式 */
+.logo-area {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: #1a1f2e;
+}
+
+.logo-expanded {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 0 8px;
+}
+
+.logo-collapsed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.logo-text {
+  font-size: 20px;
+  font-weight: 600;
+  color: #4285f4;
+  line-height: 1;
+}
+
+.logo-circle-small {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-text-small {
+  font-size: 18px;
+  font-weight: 600;
+  color: #4285f4;
+  line-height: 1;
+}
+
+.logo-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.logo-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.logo-subtitle {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 2px 0 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 菜单容器 */
+.menu-container {
+  background: #1a1f2e;
+}
+
+/* 底部用户信息 */
+.sidebar-footer {
+  padding: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: #1a1f2e;
+}
+
+.footer-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #4285f4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #ffffff;
+  margin: 0 0 2px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.logout-btn {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+  padding: 0;
+  height: auto;
+  margin: 0;
+}
+
+.logout-btn:hover {
+  color: #4285f4;
+}
+
+/* 菜单项样式 */
+:deep(.n-menu) {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.85);
+}
+
 :deep(.n-menu-item-content) {
-  @apply transition-colors duration-200;
-  /* 移动端增加触摸目标尺寸 */
+  @apply transition-all duration-200;
   min-height: 44px;
+  color: rgba(255, 255, 255, 0.85);
+  border-radius: 8px;
+  margin: 4px 8px;
 }
 
 :deep(.n-menu-item-content:hover) {
-  @apply bg-gray-100 dark:bg-gray-800;
+  background: rgba(66, 133, 244, 0.1);
+  color: #ffffff;
 }
 
 :deep(.n-menu-item-content--selected) {
-  @apply bg-green-50 dark:bg-green-900/20;
+  background: #4285f4;
+  color: #ffffff;
 }
 
 :deep(.n-menu-item-content--selected .n-menu-item-content__icon) {
-  @apply text-green-600 dark:text-green-400;
+  color: #ffffff;
+}
+
+:deep(.n-menu-item-content__icon) {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+:deep(.n-menu-item-content--selected .n-menu-item-content__icon) {
+  color: #ffffff;
+}
+
+:deep(.n-menu-divider) {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 /* 移动端菜单项优化 */

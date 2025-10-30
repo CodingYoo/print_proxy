@@ -1,154 +1,104 @@
 <template>
   <div class="dashboard-view">
     <!-- 页面标题 -->
-    <div class="mb-6">
-      <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
-        总览
-      </h1>
-      <p class="text-gray-600 dark:text-gray-400 mt-1">
-        打印代理服务系统概览
-      </p>
+    <div class="page-header">
+      <h1 class="page-title">Print Proxy Service 控制台</h1>
+      <p class="page-subtitle">统一管理打印机、打印任务与操作日志</p>
     </div>
 
     <!-- 统计卡片区域 -->
-    <div class="grid-responsive mb-8">
-      <!-- 打印机状态统计 -->
-      <n-card class="stat-card">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">
-              在线打印机
-            </p>
-            <p class="text-2xl font-bold text-green-600 dark:text-green-400">
-              {{ onlinePrintersCount }}
-            </p>
-            <p class="text-xs text-gray-500 mt-1">
-              总计 {{ totalPrintersCount }} 台
-            </p>
-          </div>
-          <div class="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center">
-            <n-icon size="24" color="#10b981">
-              <PrinterIcon />
-            </n-icon>
+    <div class="stats-grid">
+      <!-- 打印机数量统计 -->
+      <n-card class="stat-card stat-card-printers" :bordered="false">
+        <div class="stat-content">
+          <div class="stat-info">
+            <p class="stat-label">打印机数量</p>
+            <p class="stat-value">{{ totalPrintersCount }}</p>
+            <p class="stat-desc">最近打印机：{{ latestPrinterModel }}</p>
           </div>
         </div>
       </n-card>
 
-      <!-- 活跃任务统计 -->
-      <n-card class="stat-card">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">
-              活跃任务
-            </p>
-            <p class="text-2xl font-bold text-blue-600 dark:text-blue-400">
-              {{ activeJobsCount }}
-            </p>
-            <p class="text-xs text-gray-500 mt-1">
-              等待中 {{ pendingJobsCount }} 个
-            </p>
-          </div>
-          <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
-            <n-icon size="24" color="#3b82f6">
-              <TaskIcon />
-            </n-icon>
+      <!-- 任务总数统计 -->
+      <n-card class="stat-card stat-card-jobs" :bordered="false">
+        <div class="stat-content">
+          <div class="stat-info">
+            <p class="stat-label">任务总数</p>
+            <p class="stat-value">{{ totalJobsCount }}</p>
+            <p class="stat-desc">处理/排队中：{{ pendingJobsCount }}</p>
           </div>
         </div>
       </n-card>
 
-      <!-- 今日完成任务 -->
-      <n-card class="stat-card">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">
-              今日完成
-            </p>
-            <p class="text-2xl font-bold text-purple-600 dark:text-purple-400">
-              {{ todayCompletedCount }}
-            </p>
-            <p class="text-xs text-gray-500 mt-1">
-              成功率 {{ successRate }}%
-            </p>
-          </div>
-          <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex items-center justify-center">
-            <n-icon size="24" color="#8b5cf6">
-              <CheckCircleIcon />
-            </n-icon>
+      <!-- 已完成统计 -->
+      <n-card class="stat-card stat-card-completed" :bordered="false">
+        <div class="stat-content">
+          <div class="stat-info">
+            <p class="stat-label">已完成</p>
+            <p class="stat-value">{{ completedJobsCount }}</p>
+            <p class="stat-desc">最近完成任务占比：{{ successRate }}%</p>
           </div>
         </div>
       </n-card>
 
-      <!-- 系统状态 -->
-      <n-card class="stat-card">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">
-              系统状态
+      <!-- 失败/异常统计 -->
+      <n-card class="stat-card stat-card-errors" :bordered="false">
+        <div class="stat-content">
+          <div class="stat-info">
+            <p class="stat-label">失败/异常</p>
+            <p class="stat-value" :class="recentErrorsCount > 0 ? 'text-red-600' : 'text-green-600'">{{ recentErrorsCount }}</p>
+            <p class="stat-desc" :class="recentErrorsCount > 0 ? 'text-red-500' : 'text-gray-500'">
+              {{ recentErrorsCount > 0 ? '请留意错误日志' : '请留意错误日志并避免问题' }}
             </p>
-            <p class="text-2xl font-bold" :class="systemHealthColor">
-              {{ systemHealthText }}
-            </p>
-            <p class="text-xs text-gray-500 mt-1">
-              最近错误 {{ recentErrorsCount }} 个
-            </p>
-          </div>
-          <div class="w-12 h-12 rounded-lg flex items-center justify-center" :class="systemHealthBg">
-            <n-icon size="24" :color="systemHealthIconColor">
-              <component :is="systemHealthIcon" />
-            </n-icon>
           </div>
         </div>
       </n-card>
     </div>
 
     <!-- 内容区域 -->
-    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+    <div class="content-grid">
       <!-- 最新任务列表 -->
-      <div class="xl:col-span-2">
-        <n-card title="最新任务" class="h-full">
+      <div class="content-main">
+        <n-card title="最新打印任务" :bordered="false" class="content-card">
           <template #header-extra>
-            <n-button
-              text
-              type="primary"
-              @click="$router.push({ name: 'jobs' })"
-            >
-              查看全部
-            </n-button>
+            <div class="card-actions">
+              <n-button text class="view-all-link" @click="$router.push({ name: 'jobs' })">
+                任务列表
+              </n-button>
+              <n-button text class="view-all-link" @click="$router.push({ name: 'api-docs' })">
+                API
+              </n-button>
+            </div>
           </template>
 
           <div v-if="jobsLoading" class="flex justify-center py-8">
             <n-spin size="medium" />
           </div>
 
-          <div v-else-if="recentJobs.length === 0" class="text-center py-8 text-gray-500">
-            暂无任务
+          <div v-else-if="recentJobs.length === 0" class="empty-state">
+            <p>暂无打印任务</p>
           </div>
 
-          <div v-else class="space-y-3">
+          <div v-else class="jobs-list">
             <div
               v-for="job in recentJobs"
               :key="job.id"
-              class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+              class="job-item"
               @click="viewJobDetail(job.id)"
             >
-              <div class="flex items-center space-x-3 flex-1 min-w-0">
+              <div class="job-info">
                 <StatusBadge :status="job.status" />
-                <div class="flex-1 min-w-0">
-                  <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                    {{ job.filename }}
-                  </p>
-                  <p class="text-xs text-gray-500 dark:text-gray-400">
-                    {{ job.printerName }} • {{ formatTime(job.submittedAt) }}
+                <div class="job-details">
+                  <p class="job-filename">{{ job.filename }}</p>
+                  <p class="job-meta">
+                    类型：PDF • 份数：{{ job.copies }}
                   </p>
                 </div>
               </div>
-              <div class="text-right">
-                <p class="text-sm text-gray-600 dark:text-gray-400">
-                  {{ job.pages }} 页
-                </p>
-                <p class="text-xs text-gray-500">
-                  {{ job.copies }} 份
-                </p>
+              <div class="job-status">
+                <span class="status-badge" :class="'status-' + job.status">
+                  {{ getStatusText(job.status) }}
+                </span>
               </div>
             </div>
           </div>
@@ -156,15 +106,11 @@
       </div>
 
       <!-- 打印机状态 -->
-      <div>
-        <n-card title="打印机状态" class="h-full">
+      <div class="content-sidebar">
+        <n-card title="打印机状态快照" :bordered="false" class="content-card">
           <template #header-extra>
-            <n-button
-              text
-              type="primary"
-              @click="$router.push({ name: 'printers' })"
-            >
-              管理
+            <n-button text class="view-all-link" @click="$router.push({ name: 'printers' })">
+              管理打印机
             </n-button>
           </template>
 
@@ -172,109 +118,31 @@
             <n-spin size="medium" />
           </div>
 
-          <div v-else-if="printers.length === 0" class="text-center py-8 text-gray-500">
-            暂无打印机
+          <div v-else-if="printers.length === 0" class="empty-state">
+            <p>暂无打印机</p>
           </div>
 
-          <div v-else class="space-y-3">
+          <div v-else class="printers-list">
             <div
               v-for="printer in printers.slice(0, 6)"
               :key="printer.id"
-              class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+              class="printer-item"
             >
-              <div class="flex items-center space-x-3 flex-1 min-w-0">
-                <StatusBadge :status="printer.status" />
-                <div class="flex-1 min-w-0">
-                  <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                    {{ printer.name }}
-                    <n-tag v-if="printer.isDefault" size="tiny" type="success" class="ml-2">
-                      默认
-                    </n-tag>
-                  </p>
-                  <p class="text-xs text-gray-500 dark:text-gray-400">
-                    {{ printer.location || '未设置位置' }}
-                  </p>
+              <div class="printer-info">
+                <div class="printer-icon">
+                  <n-icon size="18" color="#4285f4">
+                    <PrinterIcon />
+                  </n-icon>
                 </div>
-              </div>
-              <div class="text-right">
-                <n-button
-                  size="tiny"
-                  quaternary
-                  circle
-                  @click="refreshPrinter(printer.id)"
-                  :loading="refreshingPrinters.has(printer.id)"
-                >
-                  <template #icon>
-                    <n-icon size="14">
-                      <RefreshIcon />
-                    </n-icon>
-                  </template>
-                </n-button>
+                <div class="printer-details">
+                  <p class="printer-name">{{ printer.name }}</p>
+                  <p class="printer-status">状态：{{ getStatusText(printer.status) }}</p>
+                </div>
               </div>
             </div>
           </div>
         </n-card>
       </div>
-    </div>
-
-    <!-- 快速操作区域 -->
-    <div class="mt-8">
-      <n-card title="快速操作">
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <n-button
-            size="large"
-            class="h-16"
-            @click="$router.push({ name: 'jobs', query: { action: 'create' } })"
-          >
-            <template #icon>
-              <n-icon size="20">
-                <PlusIcon />
-              </n-icon>
-            </template>
-            新建任务
-          </n-button>
-
-          <n-button
-            size="large"
-            class="h-16"
-            @click="refreshAllData"
-            :loading="refreshingAll"
-          >
-            <template #icon>
-              <n-icon size="20">
-                <RefreshIcon />
-              </n-icon>
-            </template>
-            刷新数据
-          </n-button>
-
-          <n-button
-            size="large"
-            class="h-16"
-            @click="$router.push({ name: 'printers', query: { action: 'sync' } })"
-          >
-            <template #icon>
-              <n-icon size="20">
-                <SyncIcon />
-              </n-icon>
-            </template>
-            同步打印机
-          </n-button>
-
-          <n-button
-            size="large"
-            class="h-16"
-            @click="$router.push({ name: 'logs' })"
-          >
-            <template #icon>
-              <n-icon size="20">
-                <LogIcon />
-              </n-icon>
-            </template>
-            查看日志
-          </n-button>
-        </div>
-      </n-card>
     </div>
   </div>
 </template>
@@ -285,19 +153,9 @@ import { useRouter } from 'vue-router'
 import { useMessage } from 'naive-ui'
 import { usePrintersStore } from '@/stores/printers'
 import { useJobsStore } from '@/stores/jobs'
-import { useLogsStore } from '@/stores/logs'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import {
-  PrinterOutlined as PrinterIcon,
-  FileTextOutlined as TaskIcon,
-  CheckCircleOutlined as CheckCircleIcon,
-  HeartOutlined as HealthyIcon,
-  WarningOutlined as WarningIcon,
-  CloseCircleOutlined as CriticalIcon,
-  ReloadOutlined as RefreshIcon,
-  PlusOutlined as PlusIcon,
-  SyncOutlined as SyncIcon,
-  UnorderedListOutlined as LogIcon
+  PrinterOutlined as PrinterIcon
 } from '@vicons/antd'
 
 const router = useRouter()
@@ -306,7 +164,6 @@ const message = useMessage()
 // Store 实例
 const printersStore = usePrintersStore()
 const jobsStore = useJobsStore()
-const logsStore = useLogsStore()
 
 // 响应式状态
 const refreshingAll = ref(false)
@@ -319,81 +176,38 @@ const printersLoading = computed(() => printersStore.loading)
 const onlinePrintersCount = computed(() => printersStore.onlinePrinters.length)
 const totalPrintersCount = computed(() => printers.value.length)
 
+// 最新打印机型号
+const latestPrinterModel = computed(() => {
+  if (printers.value.length === 0) return '无'
+  const latestPrinter = printers.value[0]
+  return latestPrinter?.name || 'HPRT HM-T260LR'
+})
+
 // 计算属性 - 任务统计
-const recentJobs = computed(() => jobsStore.jobs.slice(0, 8))
+const recentJobs = computed(() => jobsStore.jobs.slice(0, 6))
 const jobsLoading = computed(() => jobsStore.loading)
 const activeJobsCount = computed(() => jobsStore.activeJobs.length)
+const totalJobsCount = computed(() => jobsStore.jobs.length)
 const pendingJobsCount = computed(() => 
-  jobsStore.jobs.filter(job => job.status === 'pending').length
+  jobsStore.jobs.filter(job => job.status === 'pending' || job.status === 'printing').length
 )
 
-// 计算属性 - 今日完成任务
-const todayCompletedCount = computed(() => {
-  const today = new Date().toDateString()
-  return jobsStore.jobs.filter(job => 
-    job.status === 'completed' && 
-    new Date(job.completedAt || '').toDateString() === today
-  ).length
+// 计算属性 - 完成任务
+const completedJobsCount = computed(() => {
+  return jobsStore.jobs.filter(job => job.status === 'completed').length
 })
 
 const successRate = computed(() => {
-  const today = new Date().toDateString()
-  const todayJobs = jobsStore.jobs.filter(job => 
-    new Date(job.submittedAt).toDateString() === today
-  )
-  if (todayJobs.length === 0) return 100
+  const total = jobsStore.jobs.length
+  if (total === 0) return 100
   
-  const completedJobs = todayJobs.filter(job => job.status === 'completed')
-  return Math.round((completedJobs.length / todayJobs.length) * 100)
+  const completed = completedJobsCount.value
+  return Math.round((completed / total) * 100)
 })
 
 // 计算属性 - 系统健康状态
-const systemHealth = computed(() => logsStore.getSystemHealth)
-const recentErrorsCount = computed(() => logsStore.errorLogs.length)
-
-const systemHealthText = computed(() => {
-  switch (systemHealth.value) {
-    case 'healthy': return '健康'
-    case 'warning': return '警告'
-    case 'critical': return '严重'
-    default: return '未知'
-  }
-})
-
-const systemHealthColor = computed(() => {
-  switch (systemHealth.value) {
-    case 'healthy': return 'text-green-600 dark:text-green-400'
-    case 'warning': return 'text-yellow-600 dark:text-yellow-400'
-    case 'critical': return 'text-red-600 dark:text-red-400'
-    default: return 'text-gray-600 dark:text-gray-400'
-  }
-})
-
-const systemHealthBg = computed(() => {
-  switch (systemHealth.value) {
-    case 'healthy': return 'bg-green-100 dark:bg-green-900/20'
-    case 'warning': return 'bg-yellow-100 dark:bg-yellow-900/20'
-    case 'critical': return 'bg-red-100 dark:bg-red-900/20'
-    default: return 'bg-gray-100 dark:bg-gray-900/20'
-  }
-})
-
-const systemHealthIconColor = computed(() => {
-  switch (systemHealth.value) {
-    case 'healthy': return '#10b981'
-    case 'warning': return '#f59e0b'
-    case 'critical': return '#ef4444'
-    default: return '#6b7280'
-  }
-})
-
-const systemHealthIcon = computed(() => {
-  switch (systemHealth.value) {
-    case 'healthy': return HealthyIcon
-    case 'warning': return WarningIcon
-    case 'critical': return CriticalIcon
-    default: return HealthyIcon
-  }
+const recentErrorsCount = computed(() => {
+  return jobsStore.jobs.filter(job => job.status === 'failed' || job.status === 'cancelled').length
 })
 
 // 方法
@@ -408,20 +222,23 @@ const formatTime = (timestamp: string) => {
   return date.toLocaleDateString()
 }
 
-const viewJobDetail = (jobId: string) => {
-  router.push({ name: 'jobs', query: { jobId } })
+const getStatusText = (status: string) => {
+  const statusMap: Record<string, string> = {
+    'pending': '待处理',
+    'processing': '处理中',
+    'completed': '已完成',
+    'failed': '失败',
+    'error': '错误',
+    'online': 'online',
+    'offline': 'offline',
+    'idle': '空闲',
+    'printing': '打印中'
+  }
+  return statusMap[status] || status
 }
 
-const refreshPrinter = async (printerId: string) => {
-  refreshingPrinters.value.add(printerId)
-  try {
-    await printersStore.refreshPrinterStatus(printerId)
-    message.success('打印机状态已刷新')
-  } catch (error) {
-    message.error('刷新打印机状态失败')
-  } finally {
-    refreshingPrinters.value.delete(printerId)
-  }
+const viewJobDetail = (jobId: string) => {
+  router.push({ name: 'jobs', query: { jobId } })
 }
 
 const refreshAllData = async () => {
@@ -430,8 +247,7 @@ const refreshAllData = async () => {
     await Promise.all([
       printersStore.fetchPrinters(),
       jobsStore.fetchJobs({ page: 1, pageSize: 20 }),
-      jobsStore.fetchJobStats(),
-      logsStore.fetchLogStats()
+      jobsStore.fetchJobStats()
     ])
     message.success('数据已刷新')
   } catch (error) {
@@ -446,8 +262,7 @@ const loadInitialData = async () => {
     await Promise.all([
       printersStore.fetchPrinters(),
       jobsStore.fetchJobs({ page: 1, pageSize: 20 }),
-      jobsStore.fetchJobStats(),
-      logsStore.fetchLogStats()
+      jobsStore.fetchJobStats()
     ])
   } catch (error) {
     console.error('Failed to load initial data:', error)
@@ -460,8 +275,7 @@ const setupAutoRefresh = () => {
     try {
       await Promise.all([
         printersStore.fetchPrinters(),
-        jobsStore.fetchJobStats(),
-        logsStore.fetchLogStats()
+        jobsStore.fetchJobStats()
       ])
     } catch (error) {
       console.error('Auto refresh failed:', error)
@@ -489,33 +303,285 @@ onUnmounted(() => {
 
 <style scoped>
 .dashboard-view {
-  @apply max-w-7xl mx-auto;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
-.grid-responsive {
-  @apply grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6;
+/* 页面标题 */
+.page-header {
+  margin-bottom: 32px;
+}
+
+.page-title {
+  font-size: 28px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 8px 0;
+  letter-spacing: 0.3px;
+}
+
+.page-subtitle {
+  font-size: 14px;
+  color: #999999;
+  margin: 0;
+}
+
+/* 统计卡片区域 */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
 }
 
 .stat-card {
-  @apply transition-all duration-200 hover:shadow-md;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
 }
 
-.stat-card :deep(.n-card-header) {
-  @apply pb-4;
+.stat-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
 }
 
-.stat-card :deep(.n-card__content) {
-  @apply pt-0;
+.stat-content {
+  padding: 8px;
 }
 
-/* 移动端适配 */
-@media (max-width: 640px) {
-  .grid-responsive {
-    @apply grid-cols-1 gap-4;
+.stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #666666;
+  margin: 0 0 8px 0;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 36px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 8px 0;
+  line-height: 1;
+}
+
+.stat-desc {
+  font-size: 13px;
+  color: #999999;
+  margin: 0;
+}
+
+/* 内容区域 */
+.content-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+}
+
+.content-card {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.content-card :deep(.n-card-header) {
+  border-bottom: 1px solid #f0f0f0;
+  padding: 20px 24px;
+}
+
+.content-card :deep(.n-card__content) {
+  padding: 24px;
+}
+
+.card-actions {
+  display: flex;
+  gap: 16px;
+}
+
+.view-all-link {
+  color: #4285f4;
+  font-size: 14px;
+}
+
+.view-all-link:hover {
+  color: #1967d2;
+}
+
+/* 任务列表 */
+.jobs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.job-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: #fafafa;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.job-item:hover {
+  background: #f0f0f0;
+  transform: translateX(4px);
+}
+
+.job-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.job-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.job-filename {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1a1a1a;
+  margin: 0 0 4px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.job-meta {
+  font-size: 12px;
+  color: #999999;
+  margin: 0;
+}
+
+.job-status {
+  flex-shrink: 0;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-pending {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.status-processing {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.status-completed {
+  background: #e8f5e9;
+  color: #388e3c;
+}
+
+.status-failed,
+.status-error {
+  background: #ffebee;
+  color: #d32f2f;
+}
+
+/* 打印机列表 */
+.printers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.printer-item {
+  padding: 12px;
+  background: #fafafa;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.printer-item:hover {
+  background: #f0f0f0;
+}
+
+.printer-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.printer-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.printer-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.printer-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1a1a1a;
+  margin: 0 0 4px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.printer-status {
+  font-size: 12px;
+  color: #999999;
+  margin: 0;
+}
+
+/* 空状态 */
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: #999999;
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+  .content-grid {
+    grid-template-columns: 1fr;
   }
-  
-  .dashboard-view {
-    @apply px-4;
+}
+
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .page-title {
+    font-size: 24px;
+  }
+
+  .stat-value {
+    font-size: 32px;
+  }
+
+  .content-card :deep(.n-card-header),
+  .content-card :deep(.n-card__content) {
+    padding: 16px;
   }
 }
 </style>

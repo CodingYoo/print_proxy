@@ -25,7 +25,7 @@ export interface RequestConfig extends InternalAxiosRequestConfig {
 
 // 创建 axios 实例
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8569',
   timeout: 30000, // 增加超时时间到30秒
   headers: {
     'Content-Type': 'application/json',
