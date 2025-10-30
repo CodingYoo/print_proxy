@@ -61,22 +61,25 @@
     />
 
     <!-- 移动端卡片视图 -->
-    <div v-if="showMobileCards && isMobile" class="md:hidden space-y-4">
+    <div v-if="showMobileCards && isMobile" class="md:hidden space-y-3">
       <n-card
         v-for="item in paginatedData"
         :key="getRowKey(item)"
         size="small"
         hoverable
+        class="mobile-card"
       >
         <slot name="mobile-card" :item="item">
-          <div class="space-y-2">
+          <div class="space-y-3">
             <div
               v-for="column in mobileColumns"
               :key="column.key"
-              class="flex justify-between items-center"
+              class="flex justify-between items-start gap-3"
             >
-              <span class="text-sm text-gray-500">{{ column.title }}:</span>
-              <span class="text-sm font-medium">
+              <span class="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">
+                {{ column.title }}:
+              </span>
+              <span class="text-sm font-medium text-gray-900 dark:text-gray-100 text-right flex-1">
                 <component
                   v-if="column.render"
                   :is="column.render"
@@ -91,13 +94,15 @@
       </n-card>
       
       <!-- 移动端分页 -->
-      <div v-if="pagination" class="flex justify-center">
+      <div v-if="pagination && pageCount > 1" class="flex justify-center pt-2">
         <n-pagination
           v-model:page="currentPage"
           :page-count="pageCount"
           :page-size="pageSize"
           size="small"
-          show-quick-jumper
+          :show-quick-jumper="false"
+          :show-size-picker="false"
+          simple
         />
       </div>
     </div>
@@ -295,9 +300,32 @@ watch(() => props.data, () => {
   @apply bg-gray-50 dark:bg-gray-800;
 }
 
+/* 移动端隐藏表格，显示卡片 */
 @media (max-width: 768px) {
   :deep(.n-data-table) {
     display: none;
+  }
+  
+  .mobile-card {
+    @apply shadow-sm;
+    transition: all 0.2s ease;
+  }
+  
+  .mobile-card:active {
+    @apply shadow-md transform scale-[0.98];
+  }
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+  .mobile-card {
+    /* 增加卡片内边距以适应触摸 */
+    padding: 16px;
+  }
+  
+  :deep(.n-button) {
+    min-height: 44px;
+    min-width: 44px;
   }
 }
 </style>

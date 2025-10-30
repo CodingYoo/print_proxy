@@ -1,3 +1,12 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* 导入移动端优化样式 */
+@import './styles/mobile.css';
+
+/* 导入平板端优化样式 */
+@import './styles/tablet.css';
+
+/* 导入桌面端优化样式 */
+@import './styles/desktop.css';

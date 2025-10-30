@@ -6,6 +6,7 @@ import router from './router'
 import { naive } from './naive-ui'
 import { setupApp, initializeAuth } from './utils/app-setup'
 import { permissionDirective, roleDirective } from './directives/permission'
+import { setupApiErrorHandler } from './api/client'
 import './style.css'
 
 const app = createApp(App)
@@ -27,3 +28,6 @@ app.mount('#app')
 
 // 初始化认证状态
 initializeAuth()
+
+// 设置 API 错误处理器（在应用挂载后）
+setupApiErrorHandler()

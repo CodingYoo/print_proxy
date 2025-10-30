@@ -1,6 +1,8 @@
 import axios, { type AxiosRequestConfig, type AxiosResponse, type AxiosError, type InternalAxiosRequestConfig } from 'axios'
 import { useMessage } from 'naive-ui'
 import type { ApiError } from '@/types/common'
+import { retry, type RetryOptions } from '@/utils/retry'
+import { globalErrorHandler } from '@/utils/error-handler'
 
 // 创建消息实例（用于错误提示）
 let message: ReturnType<typeof useMessage> | null = null
@@ -15,6 +17,7 @@ export interface RequestConfig extends InternalAxiosRequestConfig {
   skipAuth?: boolean
   skipErrorHandler?: boolean
   showLoading?: boolean
+  retry?: boolean | RetryOptions
   metadata?: {
     startTime: number
   }
@@ -237,6 +240,46 @@ export const cancelRequest = (config: AxiosRequestConfig) => {
   if (controller) {
     controller.abort('Request cancelled')
     pendingRequests.delete(requestKey)
+  }
+}
+
+/**
+ * 带重试的请求包装器
+ */
+export async function requestWithRetry<T = any>(
+  config: AxiosRequestConfig & { retry?: boolean | RetryOptions }
+): Promise<AxiosResponse<T>> {
+  const { retry: retryConfig, ...axiosConfig } = config
+
+  // 如果不需要重试，直接发送请求
+  if (!retryConfig) {
+    return apiClient.request<T>(axiosConfig)
+  }
+
+  // 配置重试选项
+  const retryOptions: RetryOptions = typeof retryConfig === 'boolean' 
+    ? { maxAttempts: 3, delay: 1000 }
+    : retryConfig
+
+  // 使用重试机制发送请求
+  return retry(
+    () => apiClient.request<T>(axiosConfig),
+    {
+      ...retryOptions,
+      onRetry: (error, attempt) => {
+        console.log(`🔄 Retrying request (attempt ${attempt}):`, axiosConfig.url)
+        retryOptions.onRetry?.(error, attempt)
+      }
+    }
+  )
+}
+
+/**
+ * 设置全局错误处理器
+ */
+export function setupApiErrorHandler() {
+  if (message) {
+    globalErrorHandler.setMessageApi(message)
   }
 }
 

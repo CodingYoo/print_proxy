@@ -6,11 +6,13 @@
       <n-button
         v-if="isMobile"
         quaternary
-        circle
+        :circle="!isTouchDevice"
+        :size="isTouchDevice ? 'large' : 'medium'"
+        class="mobile-menu-btn"
         @click="$emit('toggleMobileMenu')"
       >
         <template #icon>
-          <n-icon size="20">
+          <n-icon :size="isTouchDevice ? 24 : 20">
             <MenuOutlined />
           </n-icon>
         </template>
@@ -48,6 +50,7 @@
     <div class="flex items-center space-x-3">
       <!-- 刷新按钮 -->
       <n-button
+        v-if="!isMobile"
         quaternary
         circle
         :loading="refreshing"
@@ -61,7 +64,7 @@
       </n-button>
 
       <!-- 通知按钮 -->
-      <n-badge :value="notificationCount" :max="99">
+      <n-badge v-if="!isMobile" :value="notificationCount" :max="99">
         <n-button quaternary circle>
           <template #icon>
             <n-icon size="18">
@@ -74,12 +77,16 @@
       <!-- 用户下拉菜单 -->
       <n-dropdown
         :options="userMenuOptions"
+        :trigger="isTouchDevice ? 'click' : 'hover'"
         @select="handleUserMenuSelect"
       >
-        <div class="flex items-center space-x-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg px-3 py-2 transition-colors">
+        <div 
+          class="flex items-center space-x-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+          :class="isTouchDevice ? 'px-2 py-2' : 'px-3 py-2'"
+        >
           <n-avatar
             round
-            size="small"
+            :size="isMobile ? 'medium' : 'small'"
             :src="(userInfo as any)?.avatar"
             :fallback-src="defaultAvatar"
           >
@@ -117,9 +124,12 @@ import {
 interface Props {
   collapsed: boolean
   isMobile: boolean
+  isTouchDevice?: boolean
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  isTouchDevice: false
+})
 const emit = defineEmits<{
   toggleSidebar: []
   toggleMobileMenu: []
@@ -244,5 +254,26 @@ const handleLogout = async () => {
 
 :deep(.n-breadcrumb-item__link:hover) {
   @apply text-green-600 dark:text-green-400;
+}
+
+/* 移动端菜单按钮优化 */
+.mobile-menu-btn {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+  /* 增加触摸目标尺寸 */
+  :deep(.n-button) {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  
+  /* 增加下拉菜单项的触摸目标 */
+  :deep(.n-dropdown-option) {
+    min-height: 44px;
+    padding: 12px 16px;
+  }
 }
 </style>

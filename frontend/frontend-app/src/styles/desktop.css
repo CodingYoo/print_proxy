@@ -1,0 +1,672 @@
+/**
+ * 桌面端优化样式
+ * 针对 1280px 以上屏幕尺寸的优化
+ */
+
+/* 桌面端布局优化 */
+@media (min-width: 1280px) {
+  /* 侧边栏完整显示 */
+  .n-layout-sider {
+    width: 280px;
+  }
+  
+  /* 内容区域宽度和间距 */
+  .n-layout-content {
+    padding: 24px 32px;
+  }
+  
+  /* 顶部导航栏 */
+  .n-layout-header {
+    padding: 0 32px;
+    height: 64px;
+  }
+  
+  /* 最大内容宽度 */
+  .max-content-width {
+    max-width: 1440px;
+    margin: 0 auto;
+  }
+}
+
+/* 超大屏幕优化 */
+@media (min-width: 1536px) {
+  .n-layout-content {
+    padding: 32px 48px;
+  }
+  
+  .max-content-width {
+    max-width: 1600px;
+  }
+}
+
+/* 桌面端网格布局 */
+@media (min-width: 1280px) {
+  /* 4列网格布局 */
+  .grid-responsive {
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 24px;
+  }
+  
+  /* 统计卡片网格 */
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+  }
+  
+  /* 6列网格布局 */
+  .grid-6-cols {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+@media (min-width: 1536px) {
+  .grid-responsive {
+    gap: 32px;
+  }
+  
+  .stats-grid {
+    gap: 32px;
+  }
+}
+
+/* 桌面端卡片优化 */
+@media (min-width: 1280px) {
+  .n-card {
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+  }
+  
+  .n-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+  
+  .n-card__content {
+    padding: 24px;
+  }
+  
+  .stat-card {
+    padding: 24px;
+  }
+}
+
+@media (min-width: 1536px) {
+  .n-card__content {
+    padding: 28px;
+  }
+  
+  .stat-card {
+    padding: 28px;
+  }
+}
+
+/* 桌面端表格优化 */
+@media (min-width: 1280px) {
+  .n-data-table {
+    font-size: 14px;
+  }
+  
+  .n-data-table-th,
+  .n-data-table-td {
+    padding: 14px 20px;
+  }
+  
+  .n-data-table-th {
+    font-weight: 600;
+    background: linear-gradient(to bottom, #fafafa, #f5f5f5);
+  }
+  
+  /* 表格行悬停效果 */
+  .n-data-table-tr:hover .n-data-table-td {
+    background-color: rgba(24, 160, 88, 0.05);
+  }
+  
+  /* 表格排序图标 */
+  .n-data-table-sorter {
+    transition: all 0.2s ease;
+  }
+  
+  .n-data-table-sorter:hover {
+    color: #18a058;
+  }
+}
+
+@media (min-width: 1536px) {
+  .n-data-table {
+    font-size: 15px;
+  }
+  
+  .n-data-table-th,
+  .n-data-table-td {
+    padding: 16px 24px;
+  }
+}
+
+/* 桌面端表单优化 */
+@media (min-width: 1280px) {
+  .n-form {
+    max-width: 800px;
+  }
+  
+  .n-form-item {
+    margin-bottom: 24px;
+  }
+  
+  .n-form-item-label {
+    min-width: 140px;
+    font-weight: 500;
+  }
+  
+  /* 输入框样式 */
+  .n-input,
+  .n-select .n-base-selection {
+    min-height: 40px;
+    transition: all 0.2s ease;
+  }
+  
+  .n-input:hover,
+  .n-select .n-base-selection:hover {
+    border-color: #18a058;
+  }
+  
+  .n-input:focus,
+  .n-select .n-base-selection:focus {
+    box-shadow: 0 0 0 2px rgba(24, 160, 88, 0.2);
+  }
+}
+
+@media (min-width: 1536px) {
+  .n-form {
+    max-width: 900px;
+  }
+  
+  .n-form-item {
+    margin-bottom: 28px;
+  }
+}
+
+/* 桌面端按钮优化 */
+@media (min-width: 1280px) {
+  .n-button {
+    min-height: 40px;
+    padding: 0 24px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+  
+  .n-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  .n-button:active {
+    transform: translateY(0);
+  }
+  
+  .n-button--small {
+    min-height: 32px;
+    padding: 0 16px;
+  }
+  
+  .n-button--large {
+    min-height: 48px;
+    padding: 0 32px;
+    font-size: 16px;
+  }
+}
+
+/* 桌面端模态框优化 */
+@media (min-width: 1280px) {
+  .n-modal {
+    max-width: 800px;
+    margin: 48px auto;
+  }
+  
+  .n-modal-card {
+    border-radius: 16px;
+  }
+  
+  .n-drawer {
+    max-width: 600px;
+  }
+}
+
+@media (min-width: 1536px) {
+  .n-modal {
+    max-width: 900px;
+  }
+  
+  .n-drawer {
+    max-width: 720px;
+  }
+}
+
+/* 桌面端字体大小 */
+@media (min-width: 1280px) {
+  h1 {
+    font-size: 2.25rem;
+    font-weight: 700;
+  }
+  
+  h2 {
+    font-size: 1.875rem;
+    font-weight: 600;
+  }
+  
+  h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+  
+  body,
+  .n-text {
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  
+  .text-sm,
+  .n-text--small {
+    font-size: 14px;
+  }
+  
+  .text-xs,
+  .n-text--tiny {
+    font-size: 13px;
+  }
+}
+
+@media (min-width: 1536px) {
+  h1 {
+    font-size: 2.5rem;
+  }
+  
+  h2 {
+    font-size: 2rem;
+  }
+  
+  h3 {
+    font-size: 1.625rem;
+  }
+  
+  body,
+  .n-text {
+    font-size: 16px;
+  }
+}
+
+/* 桌面端间距优化 */
+@media (min-width: 1280px) {
+  .page-container {
+    padding: 32px;
+  }
+  
+  .card-grid {
+    gap: 24px;
+  }
+  
+  .button-group {
+    gap: 16px;
+  }
+  
+  .form-group {
+    gap: 24px;
+  }
+  
+  .section-spacing {
+    margin-bottom: 32px;
+  }
+}
+
+@media (min-width: 1536px) {
+  .page-container {
+    padding: 40px;
+  }
+  
+  .card-grid {
+    gap: 32px;
+  }
+  
+  .section-spacing {
+    margin-bottom: 40px;
+  }
+}
+
+/* 桌面端侧边栏优化 */
+@media (min-width: 1280px) {
+  .sidebar-menu {
+    padding: 24px 16px;
+  }
+  
+  .sidebar-menu-item {
+    padding: 12px 20px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+  }
+  
+  .sidebar-menu-item:hover {
+    background-color: rgba(24, 160, 88, 0.08);
+    transform: translateX(4px);
+  }
+  
+  .sidebar-menu-item.active {
+    background-color: rgba(24, 160, 88, 0.12);
+    font-weight: 600;
+  }
+}
+
+/* 桌面端导航优化 */
+@media (min-width: 1280px) {
+  .n-breadcrumb {
+    font-size: 14px;
+  }
+  
+  .n-breadcrumb-item {
+    transition: all 0.2s ease;
+  }
+  
+  .n-breadcrumb-item:hover {
+    color: #18a058;
+  }
+  
+  .n-tabs-tab {
+    padding: 14px 24px;
+    font-size: 15px;
+    transition: all 0.2s ease;
+  }
+  
+  .n-tabs-tab:hover {
+    color: #18a058;
+  }
+}
+
+/* 桌面端下拉菜单优化 */
+@media (min-width: 1280px) {
+  .n-dropdown-menu {
+    min-width: 200px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  }
+  
+  .n-dropdown-option {
+    padding: 12px 20px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+  }
+  
+  .n-dropdown-option:hover {
+    background-color: rgba(24, 160, 88, 0.08);
+    transform: translateX(4px);
+  }
+}
+
+/* 桌面端分页优化 */
+@media (min-width: 1280px) {
+  .n-pagination {
+    font-size: 14px;
+  }
+  
+  .n-pagination-item {
+    min-width: 40px;
+    min-height: 40px;
+    transition: all 0.2s ease;
+  }
+  
+  .n-pagination-item:hover {
+    background-color: rgba(24, 160, 88, 0.08);
+    transform: scale(1.05);
+  }
+}
+
+/* 桌面端工具栏优化 */
+@media (min-width: 1280px) {
+  .toolbar {
+    padding: 16px 24px;
+    gap: 16px;
+    background: linear-gradient(to bottom, #ffffff, #fafafa);
+    border-radius: 12px;
+  }
+  
+  .toolbar-actions {
+    gap: 12px;
+  }
+  
+  .toolbar-search {
+    max-width: 320px;
+  }
+}
+
+@media (min-width: 1536px) {
+  .toolbar-search {
+    max-width: 400px;
+  }
+}
+
+/* 桌面端统计卡片优化 */
+@media (min-width: 1280px) {
+  .stat-card {
+    min-height: 140px;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #18a058, #36ad6a);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .stat-card:hover::before {
+    opacity: 1;
+  }
+  
+  .stat-card-value {
+    font-size: 2rem;
+    font-weight: 700;
+  }
+  
+  .stat-card-label {
+    font-size: 14px;
+    font-weight: 500;
+  }
+  
+  .stat-card-icon {
+    width: 56px;
+    height: 56px;
+  }
+}
+
+@media (min-width: 1536px) {
+  .stat-card {
+    min-height: 160px;
+  }
+  
+  .stat-card-value {
+    font-size: 2.25rem;
+  }
+  
+  .stat-card-icon {
+    width: 64px;
+    height: 64px;
+  }
+}
+
+/* 桌面端列表项优化 */
+@media (min-width: 1280px) {
+  .list-item {
+    padding: 16px 20px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+  }
+  
+  .list-item:hover {
+    background-color: rgba(24, 160, 88, 0.05);
+    transform: translateX(4px);
+  }
+  
+  .list-item-title {
+    font-size: 15px;
+    font-weight: 500;
+  }
+  
+  .list-item-description {
+    font-size: 14px;
+  }
+}
+
+/* 桌面端空状态优化 */
+@media (min-width: 1280px) {
+  .n-empty {
+    padding: 64px 32px;
+  }
+  
+  .n-empty__icon {
+    font-size: 80px;
+  }
+  
+  .n-empty__description {
+    font-size: 15px;
+  }
+}
+
+/* 桌面端加载状态优化 */
+@media (min-width: 1280px) {
+  .n-spin {
+    font-size: 40px;
+  }
+  
+  .loading-container {
+    padding: 64px;
+  }
+}
+
+/* 桌面端滚动条优化 */
+@media (min-width: 1280px) {
+  /* 自定义滚动条样式 */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+  }
+  
+  /* 深色模式滚动条 */
+  .dark ::-webkit-scrollbar-track {
+    background: #2a2a2a;
+  }
+  
+  .dark ::-webkit-scrollbar-thumb {
+    background: #4a4a4a;
+  }
+  
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: #5a5a5a;
+  }
+}
+
+/* 桌面端动画效果 */
+@media (min-width: 1280px) {
+  /* 淡入动画 */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .fade-in {
+    animation: fadeIn 0.3s ease;
+  }
+  
+  /* 滑入动画 */
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  
+  .slide-in {
+    animation: slideIn 0.3s ease;
+  }
+  
+  /* 缩放动画 */
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  
+  .scale-in {
+    animation: scaleIn 0.3s ease;
+  }
+}
+
+/* 桌面端工具提示优化 */
+@media (min-width: 1280px) {
+  .n-tooltip {
+    font-size: 13px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+}
+
+/* 桌面端通知优化 */
+@media (min-width: 1280px) {
+  .n-notification {
+    min-width: 360px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  }
+}
+
+/* 桌面端对话框优化 */
+@media (min-width: 1280px) {
+  .n-dialog {
+    border-radius: 16px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+  }
+  
+  .n-dialog__title {
+    font-size: 18px;
+    font-weight: 600;
+  }
+  
+  .n-dialog__content {
+    font-size: 15px;
+    line-height: 1.6;
+  }
+}

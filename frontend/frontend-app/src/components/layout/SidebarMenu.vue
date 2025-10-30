@@ -18,13 +18,14 @@
     </div>
 
     <!-- 菜单项 -->
-    <div class="flex-1 py-4">
+    <div class="flex-1 py-4 overflow-y-auto">
       <n-menu
         :collapsed="collapsed"
         :collapsed-width="64"
         :collapsed-icon-size="20"
         :options="menuOptions"
         :value="activeKey"
+        :indent="isMobile ? 16 : 24"
         @update:value="handleMenuSelect"
       />
     </div>
@@ -53,9 +54,13 @@ import {
 
 interface Props {
   collapsed: boolean
+  isMobile?: boolean
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  isMobile: false
+})
+
 const emit = defineEmits<{
   menuClick: []
 }>()
@@ -118,6 +123,8 @@ const handleMenuSelect = (key: string) => {
 <style scoped>
 :deep(.n-menu-item-content) {
   @apply transition-colors duration-200;
+  /* 移动端增加触摸目标尺寸 */
+  min-height: 44px;
 }
 
 :deep(.n-menu-item-content:hover) {
@@ -130,5 +137,17 @@ const handleMenuSelect = (key: string) => {
 
 :deep(.n-menu-item-content--selected .n-menu-item-content__icon) {
   @apply text-green-600 dark:text-green-400;
+}
+
+/* 移动端菜单项优化 */
+@media (max-width: 768px) {
+  :deep(.n-menu-item-content) {
+    padding: 12px 16px;
+    font-size: 16px;
+  }
+  
+  :deep(.n-menu-item-content__icon) {
+    font-size: 20px;
+  }
 }
 </style>

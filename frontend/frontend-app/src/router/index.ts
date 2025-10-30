@@ -3,13 +3,14 @@ import type { RouteRecordRaw } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { usePermission } from '@/composables/usePermission'
 import { Permission, UserRole } from '@/types/permission'
+import * as LazyRoutes from './lazy-routes'
 
-// 定义应用路由结构
+// 定义应用路由结构 - 使用懒加载优化
 const routes: RouteRecordRaw[] = [
   {
     path: '/login',
     name: 'login',
-    component: () => import('@/views/LoginView.vue'),
+    component: LazyRoutes.LoginView,
     meta: {
       title: '登录',
       hideInMenu: true
@@ -18,7 +19,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'home',
-    component: () => import('@/views/HomeView.vue'),
+    component: LazyRoutes.HomeView,
     meta: {
       title: '首页'
     }
@@ -26,7 +27,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/dashboard',
     name: 'dashboard',
-    component: () => import('@/views/DashboardView.vue'),
+    component: LazyRoutes.DashboardView,
     meta: {
       title: '总览',
       icon: 'dashboard',
@@ -37,7 +38,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/printers',
     name: 'printers',
-    component: () => import('@/views/PrintersView.vue'),
+    component: LazyRoutes.PrintersView,
     meta: {
       title: '打印机管理',
       icon: 'printer',
@@ -48,7 +49,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/jobs',
     name: 'jobs',
-    component: () => import('@/views/JobsView.vue'),
+    component: LazyRoutes.JobsView,
     meta: {
       title: '打印任务',
       icon: 'tasks',
@@ -59,7 +60,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/logs',
     name: 'logs',
-    component: () => import('@/views/LogsView.vue'),
+    component: LazyRoutes.LogsView,
     meta: {
       title: '日志查看',
       icon: 'logs',
@@ -70,7 +71,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/api-docs',
     name: 'api-docs',
-    component: () => import('@/views/ApiDocsView.vue'),
+    component: LazyRoutes.ApiDocsView,
     meta: {
       title: 'API 文档',
       icon: 'api',
@@ -81,7 +82,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/demo',
     name: 'demo',
-    component: () => import('@/views/ComponentDemo.vue'),
+    component: LazyRoutes.ComponentDemo,
     meta: {
       title: '组件演示',
       icon: 'demo',
@@ -91,7 +92,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
-    component: () => import('@/views/HomeView.vue'), // 暂时使用现有组件
+    component: LazyRoutes.HomeView,
     meta: {
       title: '页面未找到',
       hideInMenu: true
@@ -157,6 +158,11 @@ router.afterEach((to) => {
   } else {
     document.title = '打印代理服务'
   }
+})
+
+// 路由准备就绪后预加载关键路由
+router.isReady().then(() => {
+  LazyRoutes.preloadCriticalRoutes()
 })
 
 export default router

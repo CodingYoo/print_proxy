@@ -1,0 +1,231 @@
+/**
+ * 移动端优化样式
+ * 提供触摸友好的交互和移动端适配
+ */
+
+/* 移动端表单优化 */
+@media (max-width: 768px) {
+  /* 表单项增加间距 */
+  .n-form-item {
+    margin-bottom: 20px;
+  }
+  
+  /* 输入框增加高度 */
+  .n-input,
+  .n-input__input-el {
+    min-height: 44px;
+    font-size: 16px; /* 防止 iOS 自动缩放 */
+  }
+  
+  /* 选择器增加高度 */
+  .n-select .n-base-selection {
+    min-height: 44px;
+  }
+  
+  /* 按钮增加尺寸 */
+  .n-button {
+    min-height: 44px;
+    padding: 0 20px;
+    font-size: 16px;
+  }
+  
+  .n-button--small {
+    min-height: 36px;
+    padding: 0 16px;
+    font-size: 14px;
+  }
+  
+  .n-button--large {
+    min-height: 52px;
+    padding: 0 24px;
+    font-size: 18px;
+  }
+  
+  /* 复选框和单选框增加触摸区域 */
+  .n-checkbox,
+  .n-radio {
+    min-height: 44px;
+    padding: 8px 0;
+  }
+  
+  /* 开关增加尺寸 */
+  .n-switch {
+    min-height: 32px;
+  }
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+  /* 所有可点击元素增加触摸目标 */
+  button,
+  a,
+  .clickable,
+  [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* 增加链接的触摸区域 */
+  a {
+    padding: 8px 4px;
+  }
+  
+  /* 下拉菜单项增加高度 */
+  .n-dropdown-option {
+    min-height: 48px;
+    padding: 12px 16px;
+    font-size: 16px;
+  }
+  
+  /* 模态框按钮增加间距 */
+  .n-dialog__action {
+    gap: 12px;
+  }
+  
+  /* 标签页增加触摸区域 */
+  .n-tabs-tab {
+    min-height: 48px;
+    padding: 12px 20px;
+  }
+}
+
+/* 移动端卡片优化 */
+@media (max-width: 768px) {
+  .n-card {
+    border-radius: 12px;
+  }
+  
+  .n-card__content {
+    padding: 16px;
+  }
+  
+  /* 统计卡片优化 */
+  .stat-card {
+    padding: 16px;
+  }
+  
+  .stat-card .n-card__content {
+    padding: 0;
+  }
+}
+
+/* 移动端模态框优化 */
+@media (max-width: 768px) {
+  .n-modal {
+    margin: 16px;
+    max-width: calc(100vw - 32px);
+  }
+  
+  .n-drawer-content {
+    padding: 16px;
+  }
+}
+
+/* 移动端表格卡片布局 */
+@media (max-width: 768px) {
+  .table-card-view {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .table-card-item {
+    background: var(--n-color);
+    border: 1px solid var(--n-border-color);
+    border-radius: 8px;
+    padding: 16px;
+    transition: all 0.2s ease;
+  }
+  
+  .table-card-item:active {
+    transform: scale(0.98);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* 移动端分页优化 */
+@media (max-width: 768px) {
+  .n-pagination {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+  }
+  
+  .n-pagination-item {
+    min-width: 40px;
+    min-height: 40px;
+  }
+}
+
+/* 移动端网格布局优化 */
+@media (max-width: 640px) {
+  .grid-responsive {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 768px) {
+  .grid-responsive {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* 防止移动端文本选择和长按菜单 */
+@media (max-width: 768px) {
+  .no-select {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  
+  /* 按钮和图标不可选择 */
+  button,
+  .n-button,
+  .n-icon {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+}
+
+/* 移动端滚动优化 */
+@media (max-width: 768px) {
+  .scrollable {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  
+  /* 隐藏滚动条但保持功能 */
+  .scrollable-hidden::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .scrollable-hidden {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* 移动端安全区域适配 */
+@supports (padding: env(safe-area-inset-bottom)) {
+  @media (max-width: 768px) {
+    .safe-area-bottom {
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    
+    .safe-area-top {
+      padding-top: env(safe-area-inset-top);
+    }
+  }
+}
+
+/* 移动端横屏优化 */
+@media (max-width: 768px) and (orientation: landscape) {
+  .n-layout-header {
+    height: 48px;
+  }
+  
+  .n-layout-content {
+    padding: 12px;
+  }
+}

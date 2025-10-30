@@ -20,9 +20,19 @@
         :width="280"
         placement="left"
         class="md:hidden"
+        :trap-focus="false"
+        :block-scroll="true"
       >
-        <n-drawer-content title="菜单" :native-scrollbar="false">
-          <SidebarMenu :collapsed="false" @menu-click="showMobileMenu = false" />
+        <n-drawer-content 
+          title="菜单" 
+          :native-scrollbar="false"
+          body-content-style="padding: 0;"
+        >
+          <SidebarMenu 
+            :collapsed="false" 
+            :is-mobile="true"
+            @menu-click="showMobileMenu = false" 
+          />
         </n-drawer-content>
       </n-drawer>
 
@@ -32,13 +42,17 @@
           <TopNavigation 
             :collapsed="collapsed"
             :is-mobile="isMobile"
+            :is-touch-device="isTouchDevice"
             @toggle-sidebar="toggleSidebar"
-            @toggle-mobile-menu="showMobileMenu = !showMobileMenu"
+            @toggle-mobile-menu="toggleMobileMenu"
           />
         </n-layout-header>
 
         <!-- 主内容区域 -->
-        <n-layout-content class="p-4 md:p-6">
+        <n-layout-content 
+          class="p-3 sm:p-4 md:p-6 lg:p-8"
+          :class="{ 'touch-friendly': isTouchDevice }"
+        >
           <div class="max-w-7xl mx-auto">
             <router-view />
           </div>
@@ -49,18 +63,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { darkTheme } from 'naive-ui'
+import { ref, computed, watch } from 'vue'
 import SidebarMenu from './SidebarMenu.vue'
 import TopNavigation from './TopNavigation.vue'
+import { useResponsive } from '@/composables/useResponsive'
+
+// 使用响应式组合函数
+const { isMobile, isTablet, isDesktop, isTouchDevice } = useResponsive()
 
 // 响应式状态
 const collapsed = ref(false)
 const showMobileMenu = ref(false)
-const windowWidth = ref(window.innerWidth)
-
-// 计算属性
-const isMobile = computed(() => windowWidth.value < 768)
 const theme = computed(() => null) // 可以后续添加主题切换功能
 
 // 切换侧边栏
@@ -68,28 +81,27 @@ const toggleSidebar = () => {
   collapsed.value = !collapsed.value
 }
 
-// 监听窗口大小变化
-const handleResize = () => {
-  windowWidth.value = window.innerWidth
-  
+// 切换移动端菜单
+const toggleMobileMenu = () => {
+  showMobileMenu.value = !showMobileMenu.value
+}
+
+// 监听设备类型变化，自动调整布局
+watch([isMobile, isDesktop], ([mobile, desktop]) => {
   // 移动端自动关闭抽屉菜单
-  if (!isMobile.value) {
+  if (!mobile) {
     showMobileMenu.value = false
   }
   
   // 桌面端自动展开侧边栏
-  if (windowWidth.value > 1024 && collapsed.value) {
+  if (desktop && collapsed.value) {
     collapsed.value = false
   }
-}
-
-onMounted(() => {
-  window.addEventListener('resize', handleResize)
-  handleResize() // 初始化
-})
-
-onUnmounted(() => {
-  window.removeEventListener('resize', handleResize)
+  
+  // 平板端默认折叠侧边栏
+  if (isTablet.value && !collapsed.value) {
+    collapsed.value = true
+  }
 })
 </script>
 
@@ -101,6 +113,26 @@ onUnmounted(() => {
 @media (max-width: 768px) {
   .n-layout-sider {
     display: none !important;
+  }
+}
+
+/* 触摸友好的交互 */
+.touch-friendly {
+  /* 增加触摸目标的最小尺寸 */
+  --min-touch-target: 44px;
+}
+
+.touch-friendly :deep(button),
+.touch-friendly :deep(.n-button) {
+  min-height: var(--min-touch-target);
+  min-width: var(--min-touch-target);
+}
+
+/* 移动端优化滚动 */
+@media (max-width: 768px) {
+  .n-layout-content {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
   }
 }
 </style>
