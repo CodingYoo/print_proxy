@@ -8,7 +8,7 @@ export default {
    * 开发环境配置
    */
   development: {
-    apiBaseUrl: 'http://localhost:8000',
+    apiBaseUrl: '/api', // 使用相对路径，由Vite代理到 http://localhost:8568
     publicPath: '/',
     outputDir: 'dist',
   },

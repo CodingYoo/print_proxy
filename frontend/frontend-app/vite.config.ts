@@ -24,7 +24,7 @@ export default defineConfig(({ mode }) => {
       port: 3000,
       proxy: {
         '/api': {
-          target: env.VITE_API_BASE_URL || 'http://localhost:8568',
+          target: 'http://localhost:8568', // 后端服务器地址
           changeOrigin: true,
           // 不重写路径，保持 /api 前缀
         }
