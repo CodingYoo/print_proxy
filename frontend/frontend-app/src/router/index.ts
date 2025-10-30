@@ -71,6 +71,16 @@ const routes: RouteRecordRaw[] = [
     }
   },
   {
+    path: '/demo',
+    name: 'demo',
+    component: () => import('@/views/ComponentDemo.vue'),
+    meta: {
+      title: '组件演示',
+      icon: 'demo',
+      requiresAuth: false
+    }
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
     component: () => import('@/views/HomeView.vue'), // 暂时使用现有组件
