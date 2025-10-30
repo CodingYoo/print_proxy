@@ -29,7 +29,7 @@ from app.utils.print_utils import (
     should_rotate_image,
     optimize_image_for_print,
     get_optimal_resampling_filter,
-    process_svg_for_print
+    # process_svg_for_print  # SVG 支持已移除
 )
 
 try:
@@ -63,7 +63,7 @@ except ImportError:  # pragma: no cover
 
 
 SUPPORTED_IMAGE_TYPES = {"png", "jpg", "jpeg", "bmp"}
-SVG_FILE_TYPES = {"svg"}
+# SVG 支持已移除
 RAW_COMPATIBLE_TYPES = {"txt"}
 WORD_FILE_TYPES = {"doc", "docx"}
 EXCEL_FILE_TYPES = {"xls", "xlsx"}
@@ -205,8 +205,7 @@ def _prepare_print_payload(job: PrintJob) -> tuple[str, str | bytes]:
         return "raw", job.content
     if file_type in SUPPORTED_IMAGE_TYPES:
         return "image_gdi", job.content
-    if file_type in SVG_FILE_TYPES:
-        return "svg", job.content
+    # SVG 支持已移除
     if file_type == "pdf":
         path = _prepare_temp_file(job.content, suffix=".pdf")
         return "file", path
@@ -462,54 +461,7 @@ def _send_to_printer(job: PrintJob) -> None:
             auto_rotate=auto_rotate,
             enhance_quality=enhance_quality
         )
-    elif mode == "svg":
-        if not isinstance(payload, (bytes, bytearray)):
-            raise RuntimeError("无效的打印内容类型")
-        
-        # 从数据库模型中获取打印选项
-        fit_mode = getattr(job, 'fit_mode', 'fill') or 'fill'
-        auto_rotate_value = getattr(job, 'auto_rotate', 1)
-        enhance_quality_value = getattr(job, 'enhance_quality', 1)
-        
-        # 将整数转换为布尔值
-        auto_rotate = bool(auto_rotate_value) if auto_rotate_value is not None else True
-        enhance_quality = bool(enhance_quality_value) if enhance_quality_value is not None else True
-        
-        # 解析DPI
-        dpi = 203  # 默认DPI
-        if job.media_size and '@' in job.media_size:
-            try:
-                dpi_str = job.media_size.split('@')[1].replace('dpi', '')
-                dpi = int(dpi_str)
-            except:
-                pass
-        
-        try:
-            # 将SVG转换为PNG
-            logger.info(f"正在将SVG转换为PNG进行打印，DPI={dpi}, fit_mode={fit_mode}")
-            png_content = process_svg_for_print(
-                bytes(payload),
-                media_size=job.media_size,
-                dpi=dpi,
-                fit_mode=fit_mode,
-                color_mode=job.color_mode,
-                enhance_quality=enhance_quality
-            )
-            
-            # 使用图片打印方式
-            _print_image_with_gdi(
-                png_content, 
-                printer_name, 
-                job.copies, 
-                job.title,
-                media_size=job.media_size,
-                color_mode=job.color_mode,
-                fit_mode=fit_mode,
-                auto_rotate=auto_rotate,
-                enhance_quality=False  # SVG处理时已经应用了质量增强
-            )
-        except Exception as exc:
-            raise RuntimeError(f"SVG打印处理失败: {exc}") from exc
+    # SVG 支持已移除
     else:
         if not isinstance(payload, str):
             raise RuntimeError("无效的打印内容类型")
@@ -568,21 +520,7 @@ def generate_preview(job: PrintJob) -> bytes:
         buffer = io.BytesIO()
         preview.save(buffer, format="PNG")
         return buffer.getvalue()
-    if file_type in SVG_FILE_TYPES:
-        try:
-            # 将SVG转换为PNG预览
-            from app.utils.print_utils import convert_svg_to_png
-            png_bytes = convert_svg_to_png(job.content, dpi=96)  # 使用较低DPI生成预览
-            
-            # 生成缩略图
-            image = Image.open(io.BytesIO(png_bytes))
-            preview = image.copy()
-            preview.thumbnail((512, 512))
-            buffer = io.BytesIO()
-            preview.save(buffer, format="PNG")
-            return buffer.getvalue()
-        except Exception as exc:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"SVG预览生成失败: {exc}") from exc
+    # SVG 支持已移除
     if file_type == "pdf":
         if not fitz:
             raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="缺少 PyMuPDF，无法生成 PDF 预览")

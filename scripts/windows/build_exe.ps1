@@ -130,6 +130,11 @@ try {
     & $pipExe install -r requirements.txt --quiet
     Write-Success "Project dependencies installed"
     
+    # Note: SVG support (cairosvg) is disabled by default in EXE builds
+    # to avoid Cairo DLL compatibility issues on Windows
+    Write-Info "SVG support disabled in EXE build (Cairo DLL issues)"
+    Write-Info "Use ENABLE_SVG=1 environment variable to enable if needed"
+    
     Write-Info "Installing PyInstaller..."
     & $pipExe install 'pyinstaller==5.13.0' --quiet
     Write-Success "PyInstaller installed"
@@ -225,10 +230,12 @@ try {
         '--collect-all', 'pywin32',
         '--collect-all', 'uvicorn',
         '--collect-all', 'jinja2',
+
         '--collect-submodules', 'app',
         '--hidden-import', 'app.main',
         '--hidden-import', 'passlib.handlers.bcrypt',
         '--hidden-import', 'win32timezone',
+
         '--add-data', 'app\templates;app\templates',
         'scripts\windows\run_app.py'
     )
