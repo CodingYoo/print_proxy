@@ -41,8 +41,11 @@ PrintProxy 是一个专业的 Windows 打印代理服务，基于 FastAPI 构建
 
 1. **下载安装器**
    ```powershell
-   # 下载最新版本
-   scripts\windows\PrintProxySetup_1.0.0.exe
+   # 构建安装器（如果还没有）
+   .\build_installer.bat
+   
+   # 安装器位置
+   dist\PrintProxySetup_1.0.0.exe
    ```
 
 2. **安装程序**
@@ -62,7 +65,10 @@ PrintProxy 是一个专业的 Windows 打印代理服务，基于 FastAPI 构建
 ### 方式 2：直接运行 EXE
 
 ```powershell
-# 下载并运行
+# 构建EXE（如果还没有）
+.\build_exe.bat
+
+# 直接运行
 dist\PrintProxy.exe
 
 # 或复制到任意目录
@@ -90,6 +96,15 @@ C:\YourPath\PrintProxy.exe
    
    # 或直接运行
    uvicorn app.main:app --reload
+   ```
+
+4. **构建发布版本**
+   ```powershell
+   # 构建 EXE 文件
+   .\build_exe.bat
+   
+   # 构建安装器
+   .\build_installer.bat
    ```
 
 ## ⚙️ 配置说明
@@ -121,6 +136,42 @@ notepad .env
 4. **默认值** - 最低优先级
 
 详细配置说明请查看：[配置快速参考](docs/配置快速参考.md)
+
+## 🔨 构建说明
+
+如果需要自己构建安装包和EXE文件：
+
+### 构建 EXE 文件
+
+```powershell
+# 方式 1：使用批处理脚本（推荐）
+.\build_exe.bat
+
+# 方式 2：使用 PowerShell 脚本
+powershell -ExecutionPolicy Bypass -File scripts\windows\build_exe.ps1
+
+# 输出位置
+dist\PrintProxy.exe
+```
+
+### 构建安装器
+
+```powershell
+# 前提：需要先构建 EXE 文件
+.\build_exe.bat
+
+# 构建安装器（需要安装 NSIS）
+.\build_installer.bat
+
+# 输出位置
+dist\PrintProxySetup_1.0.0.exe
+```
+
+### 构建要求
+
+- **Python 3.11+**：用于构建 EXE
+- **NSIS 3.x**：用于构建安装器（从 [NSIS官网](https://nsis.sourceforge.io/Download) 下载）
+- **Windows 10/11**：构建环境
 
 ## 🌐 访问服务
 
@@ -347,9 +398,9 @@ PrintProxy/
 │   ├── show_config.py            # 显示配置
 │   └── validate_config.py        # 验证配置
 ├── tests/                        # 🧪 测试文件
-├── dist/                         # 📦 打包输出
-│   ├── PrintProxy.exe            # 主程序
-│   └── PrintProxySetup_1.0.0.exe # 安装器
+├── dist/                         # 📦 打包输出（构建后生成）
+│   ├── PrintProxy.exe            # 主程序（build_exe.bat 生成）
+│   └── PrintProxySetup_1.0.0.exe # 安装器（build_installer.bat 生成）
 ├── .env.example                  # 环境变量模板
 ├── config.yaml.example          # YAML 配置模板
 ├── requirements.txt              # Python 依赖
