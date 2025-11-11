@@ -5,22 +5,12 @@ import type { PaginationInfo } from '@/types/common'
 
 // 定义打印机接口
 export interface Printer {
-  id: string
+  id: number
   name: string
-  status: 'online' | 'offline' | 'error' | 'busy'
-  isDefault: boolean
-  driver?: string
+  status: string
+  is_default: boolean
   location?: string
-  description?: string
-  paperSizes?: string[]
-  capabilities?: {
-    color: boolean
-    duplex: boolean
-    maxResolution?: string
-  }
-  lastSeen?: string
-  createdAt?: string
-  updatedAt?: string
+  created_at: string
 }
 
 // 定义打印机查询参数
@@ -52,7 +42,7 @@ export const usePrintersStore = defineStore('printers', () => {
   )
 
   const defaultPrinter = computed(() => 
-    printers.value.find(printer => printer.isDefault)
+    printers.value.find(printer => printer.is_default)
   )
 
   const printersByStatus = computed(() => {
@@ -74,10 +64,10 @@ export const usePrintersStore = defineStore('printers', () => {
 
     try {
       const response = await apiClient.get('/printers', { params })
-      printers.value = response.data.items || response.data
+      printers.value = response.data || []
       
-      if (response.data.pagination) {
-        pagination.value = response.data.pagination
+      if (response.data && Array.isArray(response.data)) {
+        pagination.value.total = response.data.length
       }
     } catch (err: any) {
       error.value = err.response?.data?.detail || '获取打印机列表失败'
@@ -88,7 +78,7 @@ export const usePrintersStore = defineStore('printers', () => {
   }
 
   // 获取单个打印机详情
-  const fetchPrinter = async (id: string) => {
+  const fetchPrinter = async (id: number) => {
     try {
       const response = await apiClient.get(`/printers/${id}`)
       return response.data
@@ -117,7 +107,7 @@ export const usePrintersStore = defineStore('printers', () => {
   }
 
   // 更新打印机
-  const updatePrinter = async (id: string, printerData: Partial<Printer>) => {
+  const updatePrinter = async (id: number, printerData: Partial<Printer>) => {
     loading.value = true
     error.value = null
 
@@ -140,7 +130,7 @@ export const usePrintersStore = defineStore('printers', () => {
   }
 
   // 删除打印机
-  const deletePrinter = async (id: string) => {
+  const deletePrinter = async (id: number) => {
     loading.value = true
     error.value = null
 
@@ -156,13 +146,13 @@ export const usePrintersStore = defineStore('printers', () => {
   }
 
   // 设置默认打印机
-  const setDefaultPrinter = async (id: string) => {
+  const setDefaultPrinter = async (id: number) => {
     try {
-      await apiClient.post(`/printers/${id}/set-default`)
+      await apiClient.post(`/printers/${id}/default`)
       
       // 更新本地状态
       printers.value.forEach(printer => {
-        printer.isDefault = printer.id === id
+        printer.is_default = printer.id === id
       })
     } catch (err: any) {
       error.value = err.response?.data?.detail || '设置默认打印机失败'
@@ -171,7 +161,7 @@ export const usePrintersStore = defineStore('printers', () => {
   }
 
   // 测试打印机连接
-  const testPrinter = async (id: string) => {
+  const testPrinter = async (id: number) => {
     try {
       const response = await apiClient.post(`/printers/${id}/test`)
       return response.data
@@ -182,7 +172,7 @@ export const usePrintersStore = defineStore('printers', () => {
   }
 
   // 刷新打印机状态
-  const refreshPrinterStatus = async (id?: string) => {
+  const refreshPrinterStatus = async (id?: number) => {
     try {
       if (id) {
         const response = await apiClient.post(`/printers/${id}/refresh`)
@@ -196,7 +186,7 @@ export const usePrintersStore = defineStore('printers', () => {
         return updatedPrinter
       } else {
         // 刷新所有打印机状态
-        await apiClient.post('/printers/refresh-all')
+        await apiClient.post('/printers/sync')
         await fetchPrinters()
       }
     } catch (err: any) {

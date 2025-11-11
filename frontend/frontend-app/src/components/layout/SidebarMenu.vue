@@ -143,18 +143,19 @@ const handleLogout = async () => {
 
 <style scoped>
 .sidebar-container {
-  background: #1a1f2e;
+  background: #0f1419;
+  background: linear-gradient(180deg, #0f1419 0%, #1a1f2e 100%);
 }
 
 /* Logo 区域样式 */
 .logo-area {
-  height: 64px;
+  height: 72px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  background: #1a1f2e;
+  padding: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: transparent;
 }
 
 .logo-expanded {
@@ -212,19 +213,20 @@ const handleLogout = async () => {
 }
 
 .logo-title {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
-  color: #ffffff;
+  color: #e8eaed;
   margin: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: 0.3px;
 }
 
 .logo-subtitle {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.5);
-  margin: 2px 0 0 0;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 3px 0 0 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -232,14 +234,15 @@ const handleLogout = async () => {
 
 /* 菜单容器 */
 .menu-container {
-  background: #1a1f2e;
+  background: transparent;
+  padding-top: 8px;
 }
 
 /* 底部用户信息 */
 .sidebar-footer {
-  padding: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  background: #1a1f2e;
+  padding: 16px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: transparent;
 }
 
 .footer-user {
@@ -267,8 +270,8 @@ const handleLogout = async () => {
 .user-name {
   font-size: 13px;
   font-weight: 500;
-  color: #ffffff;
-  margin: 0 0 2px 0;
+  color: #e8eaed;
+  margin: 0 0 4px 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -276,50 +279,67 @@ const handleLogout = async () => {
 
 .logout-btn {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.55);
   padding: 0;
   height: auto;
   margin: 0;
+  font-weight: 400;
 }
 
 .logout-btn:hover {
   color: #4285f4;
+  text-decoration: underline;
 }
 
 /* 菜单项样式 */
 :deep(.n-menu) {
   background: transparent;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.75);
 }
 
 :deep(.n-menu-item-content) {
   @apply transition-all duration-200;
-  min-height: 44px;
-  color: rgba(255, 255, 255, 0.85);
-  border-radius: 8px;
-  margin: 4px 8px;
+  min-height: 48px;
+  color: rgba(255, 255, 255, 0.75);
+  border-radius: 0;
+  margin: 0;
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+  font-size: 14px;
 }
 
 :deep(.n-menu-item-content:hover) {
-  background: rgba(66, 133, 244, 0.1);
+  background: rgba(255, 255, 255, 0.05);
   color: #ffffff;
 }
 
 :deep(.n-menu-item-content--selected) {
-  background: #4285f4;
-  color: #ffffff;
+  background: rgba(66, 133, 244, 0.15);
+  color: #4285f4;
+  font-weight: 500;
 }
 
-:deep(.n-menu-item-content--selected .n-menu-item-content__icon) {
-  color: #ffffff;
+:deep(.n-menu-item-content--selected::before) {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #4285f4;
 }
 
 :deep(.n-menu-item-content__icon) {
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 18px;
 }
 
 :deep(.n-menu-item-content--selected .n-menu-item-content__icon) {
-  color: #ffffff;
+  color: #4285f4;
+}
+
+:deep(.n-menu-item-content:hover .n-menu-item-content__icon) {
+  color: rgba(255, 255, 255, 0.9);
 }
 
 :deep(.n-menu-divider) {

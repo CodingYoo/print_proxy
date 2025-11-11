@@ -89,9 +89,9 @@
               <div class="job-info">
                 <StatusBadge :status="job.status" />
                 <div class="job-details">
-                  <p class="job-filename">{{ job.filename }}</p>
+                  <p class="job-filename">{{ job.title }}</p>
                   <p class="job-meta">
-                    类型：PDF • 份数：{{ job.copies }}
+                    类型：{{ job.file_type.toUpperCase() }} • 份数：{{ job.copies }}
                   </p>
                 </div>
               </div>
@@ -237,8 +237,8 @@ const getStatusText = (status: string) => {
   return statusMap[status] || status
 }
 
-const viewJobDetail = (jobId: string) => {
-  router.push({ name: 'jobs', query: { jobId } })
+const viewJobDetail = (jobId: number) => {
+  router.push({ name: 'jobs', query: { jobId: jobId.toString() } })
 }
 
 const refreshAllData = async () => {
@@ -246,8 +246,7 @@ const refreshAllData = async () => {
   try {
     await Promise.all([
       printersStore.fetchPrinters(),
-      jobsStore.fetchJobs({ page: 1, pageSize: 20 }),
-      jobsStore.fetchJobStats()
+      jobsStore.fetchJobs({ page: 1, pageSize: 20 })
     ])
     message.success('数据已刷新')
   } catch (error) {
@@ -261,8 +260,7 @@ const loadInitialData = async () => {
   try {
     await Promise.all([
       printersStore.fetchPrinters(),
-      jobsStore.fetchJobs({ page: 1, pageSize: 20 }),
-      jobsStore.fetchJobStats()
+      jobsStore.fetchJobs({ page: 1, pageSize: 20 })
     ])
   } catch (error) {
     console.error('Failed to load initial data:', error)
@@ -275,7 +273,7 @@ const setupAutoRefresh = () => {
     try {
       await Promise.all([
         printersStore.fetchPrinters(),
-        jobsStore.fetchJobStats()
+        jobsStore.fetchJobs({ page: 1, pageSize: 20 })
       ])
     } catch (error) {
       console.error('Auto refresh failed:', error)

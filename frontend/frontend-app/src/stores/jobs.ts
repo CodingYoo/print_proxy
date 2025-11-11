@@ -5,30 +5,23 @@ import type { PaginationInfo } from '@/types/common'
 
 // 定义打印任务接口
 export interface PrintJob {
-  id: string
-  filename: string
-  status: 'pending' | 'printing' | 'completed' | 'failed' | 'cancelled'
-  printerId: string
-  printerName?: string
-  userId?: string
-  username?: string
-  pages: number
+  id: number
+  title: string
+  file_type: string
+  status: string
   copies: number
-  priority: 'low' | 'normal' | 'high'
-  settings: {
-    paperSize?: string
-    orientation?: 'portrait' | 'landscape'
-    color?: boolean
-    duplex?: boolean
-    quality?: 'draft' | 'normal' | 'high'
-  }
-  progress?: number
-  errorMessage?: string
-  submittedAt: string
-  startedAt?: string
-  completedAt?: string
-  estimatedDuration?: number
-  actualDuration?: number
+  priority: number
+  printer_name?: string
+  media_size?: string
+  color_mode?: string
+  duplex?: string
+  dpi?: number
+  fit_mode?: string
+  auto_rotate?: boolean
+  enhance_quality?: boolean
+  error_message?: string
+  created_at: string
+  updated_at: string
 }
 
 // 定义任务查询参数
@@ -43,15 +36,6 @@ export interface JobsQueryParams {
   pageSize?: number
 }
 
-// 定义任务统计信息
-export interface JobStats {
-  total: number
-  pending: number
-  printing: number
-  completed: number
-  failed: number
-  cancelled: number
-}
 
 // 定义打印任务状态 store
 export const useJobsStore = defineStore('jobs', () => {
@@ -64,14 +48,6 @@ export const useJobsStore = defineStore('jobs', () => {
     pageSize: 20,
     total: 0,
     totalPages: 0
-  })
-  const stats = ref<JobStats>({
-    total: 0,
-    pending: 0,
-    printing: 0,
-    completed: 0,
-    failed: 0,
-    cancelled: 0
   })
 
   // 计算属性
@@ -117,11 +93,16 @@ export const useJobsStore = defineStore('jobs', () => {
     error.value = null
 
     try {
-      const response = await apiClient.get('/jobs', { params })
-      jobs.value = response.data.items || response.data
+      const response = await apiClient.get('/jobs', { 
+        params: {
+          skip: params.page ? (params.page - 1) * (params.pageSize || 20) : 0,
+          limit: params.pageSize || 20
+        }
+      })
+      jobs.value = response.data || []
       
-      if (response.data?.pagination) {
-        pagination.value = response.data.pagination
+      if (response.data && Array.isArray(response.data)) {
+        pagination.value.total = response.data.length
       }
     } catch (err: any) {
       error.value = err.response?.data?.detail || '获取打印任务列表失败'
@@ -131,18 +112,9 @@ export const useJobsStore = defineStore('jobs', () => {
     }
   }
 
-  // 获取任务统计信息
-  const fetchJobStats = async (params: Partial<JobsQueryParams> = {}) => {
-    try {
-      const response = await apiClient.get('/jobs/stats', { params })
-      stats.value = response.data
-    } catch (err: any) {
-      console.error('Failed to fetch job stats:', err)
-    }
-  }
 
   // 获取单个任务详情
-  const fetchJob = async (id: string) => {
+  const fetchJob = async (id: number) => {
     try {
       const response = await apiClient.get(`/jobs/${id}`)
       return response.data
@@ -199,7 +171,7 @@ export const useJobsStore = defineStore('jobs', () => {
   }
 
   // 取消打印任务
-  const cancelJob = async (id: string) => {
+  const cancelJob = async (id: number) => {
     try {
       await apiClient.post(`/jobs/${id}/cancel`)
       
@@ -214,7 +186,7 @@ export const useJobsStore = defineStore('jobs', () => {
   }
 
   // 重新提交任务
-  const resubmitJob = async (id: string) => {
+  const resubmitJob = async (id: number) => {
     try {
       const response = await apiClient.post(`/jobs/${id}/resubmit`)
       const updatedJob = response.data
@@ -232,7 +204,7 @@ export const useJobsStore = defineStore('jobs', () => {
   }
 
   // 删除任务
-  const deleteJob = async (id: string) => {
+  const deleteJob = async (id: number) => {
     try {
       await apiClient.delete(`/jobs/${id}`)
       jobs.value = jobs.value.filter(job => job.id !== id)
@@ -243,7 +215,7 @@ export const useJobsStore = defineStore('jobs', () => {
   }
 
   // 批量操作
-  const batchCancelJobs = async (jobIds: string[]) => {
+  const batchCancelJobs = async (jobIds: number[]) => {
     try {
       await apiClient.post('/jobs/batch-cancel', { job_ids: jobIds })
       
@@ -259,7 +231,7 @@ export const useJobsStore = defineStore('jobs', () => {
     }
   }
 
-  const batchDeleteJobs = async (jobIds: string[]) => {
+  const batchDeleteJobs = async (jobIds: number[]) => {
     try {
       await apiClient.post('/jobs/batch-delete', { job_ids: jobIds })
       jobs.value = jobs.value.filter(job => !jobIds.includes(job.id))
@@ -270,16 +242,10 @@ export const useJobsStore = defineStore('jobs', () => {
   }
 
   // 实时更新任务状态
-  const updateJobStatus = (jobId: string, status: PrintJob['status'], progress?: number) => {
+  const updateJobStatus = (jobId: number, status: string, progress?: number) => {
     const job = jobs.value.find(job => job.id === jobId)
     if (job) {
       job.status = status
-      if (progress !== undefined) {
-        job.progress = progress
-      }
-      if (status === 'completed' || status === 'failed') {
-        job.completedAt = new Date().toISOString()
-      }
     }
   }
 
@@ -289,7 +255,6 @@ export const useJobsStore = defineStore('jobs', () => {
     loading,
     error,
     pagination,
-    stats,
     // 计算属性
     activeJobs,
     completedJobs,
@@ -298,7 +263,6 @@ export const useJobsStore = defineStore('jobs', () => {
     jobsByPrinter,
     // 方法
     fetchJobs,
-    fetchJobStats,
     fetchJob,
     submitJob,
     cancelJob,
