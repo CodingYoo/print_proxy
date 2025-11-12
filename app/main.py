@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import os
+import sys
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.api import api_router
 from app.core.config import settings
@@ -24,6 +26,18 @@ def create_application() -> FastAPI:
         allow_headers=["*"],
         allow_credentials=True,
     )
+
+    # Mount static files
+    # 支持打包后的exe和开发模式
+    if getattr(sys, 'frozen', False):
+        # 打包后的exe，static在_MEIPASS目录下
+        static_dir = os.path.join(sys._MEIPASS, 'app', 'static')
+    else:
+        # 开发模式
+        static_dir = os.path.join(os.path.dirname(__file__), 'static')
+    
+    if os.path.exists(static_dir):
+        app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
     app.include_router(api_router, prefix=settings.api_prefix)
     app.include_router(web_router)

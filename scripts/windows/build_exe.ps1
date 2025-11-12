@@ -164,14 +164,6 @@ try {
     # 6. Clean and build
     Write-Step "Step 6/7: Build EXE"
     
-    # Stop running process
-    $runningProcess = Get-Process -Name 'PrintProxy' -ErrorAction SilentlyContinue
-    if ($runningProcess) {
-        Write-Info "Stopping running PrintProxy process..."
-        $runningProcess | Stop-Process -Force
-        Write-Success "Process stopped"
-    }
-
     # Clean Python cache files first
     Write-Info "Cleaning Python cache files..."
     Get-ChildItem -Path $projectRoot -Recurse -Name "__pycache__" -Directory | Where-Object { $_ -notlike "*\.venv_*" } | ForEach-Object {
@@ -236,7 +228,8 @@ try {
         '--hidden-import', 'passlib.handlers.bcrypt',
         '--hidden-import', 'win32timezone',
 
-        '--add-data', 'app\templates;app\templates',
+        '--add-data', "app\templates;app\templates",
+        '--add-data', "app\static;app\static",
         'scripts\windows\run_app.py'
     )
 
