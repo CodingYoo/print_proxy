@@ -32,12 +32,20 @@ def create_application() -> FastAPI:
     if getattr(sys, 'frozen', False):
         # 打包后的exe，static在_MEIPASS目录下
         static_dir = os.path.join(sys._MEIPASS, 'app', 'static')
+        dist_dir = os.path.join(sys._MEIPASS, 'app', 'static', 'dist')
     else:
         # 开发模式
         static_dir = os.path.join(os.path.dirname(__file__), 'static')
+        dist_dir = os.path.join(os.path.dirname(__file__), 'static', 'dist')
     
     if os.path.exists(static_dir):
         app.mount("/static", StaticFiles(directory=static_dir), name="static")
+    
+    # Mount SPA assets (Vite build output)
+    if os.path.exists(dist_dir):
+        assets_dir = os.path.join(dist_dir, 'assets')
+        if os.path.exists(assets_dir):
+            app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
 
     app.include_router(api_router, prefix=settings.api_prefix)
     app.include_router(web_router)

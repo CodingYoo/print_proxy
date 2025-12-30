@@ -8,7 +8,22 @@ echo   Print Proxy Quick Build Tool
 echo ========================================
 echo.
 
-REM Skip tests by default for faster build
+REM Build frontend first
+echo [1/2] Building frontend...
+cd frontend
+call npm run build
+if %ERRORLEVEL% NEQ 0 (
+    echo Frontend build failed!
+    cd ..
+    pause
+    exit /b 1
+)
+cd ..
+echo Frontend build completed.
+echo.
+
+REM Build Python EXE
+echo [2/2] Building Python EXE...
 powershell -ExecutionPolicy Bypass -File scripts\windows\build_exe.ps1 -SkipTests
 
 if %ERRORLEVEL% EQU 0 (

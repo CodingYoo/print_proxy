@@ -1,44 +1,56 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
+import os
+import sys
 
-from app.core.config import settings
+from fastapi import APIRouter
+from fastapi.responses import FileResponse, RedirectResponse
 
-
-templates = Jinja2Templates(directory="app/templates")
 
 router = APIRouter()
 
 
+def get_spa_dist_dir() -> str:
+    """获取 SPA 静态文件目录"""
+    if getattr(sys, 'frozen', False):
+        # 打包后的 exe
+        return os.path.join(sys._MEIPASS, 'app', 'static', 'dist')
+    else:
+        # 开发模式
+        return os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static', 'dist')
+
+
+def serve_spa_index():
+    """返回 SPA 的 index.html"""
+    dist_dir = get_spa_dist_dir()
+    index_path = os.path.join(dist_dir, 'index.html')
+    if os.path.exists(index_path):
+        return FileResponse(index_path, media_type='text/html')
+    # 如果没有构建前端，返回提示
+    return FileResponse(
+        os.path.join(os.path.dirname(os.path.dirname(__file__)), 'templates', 'fallback.html'),
+        media_type='text/html'
+    )
+
+
 @router.get("/", include_in_schema=False)
-def root_redirect() -> RedirectResponse:
-    return RedirectResponse(url="/login")
+def root():
+    return serve_spa_index()
 
 
-@router.get("/login", response_class=HTMLResponse)
-def login_page(request: Request) -> HTMLResponse:
-    return templates.TemplateResponse(
-        "login.html",
-        {
-            "request": request,
-            "api_prefix": settings.api_prefix,
-            "app_name": settings.app_name,
-        },
-    )
+@router.get("/login", include_in_schema=False)
+def login_page():
+    return serve_spa_index()
 
 
-@router.get("/dashboard", response_class=HTMLResponse)
-def dashboard(request: Request) -> HTMLResponse:
-    return templates.TemplateResponse(
-        "dashboard.html",
-        {
-            "request": request,
-            "api_prefix": settings.api_prefix,
-            "app_name": settings.app_name,
-        },
-    )
+@router.get("/dashboard", include_in_schema=False)
+def dashboard():
+    return serve_spa_index()
+
+
+@router.get("/dashboard/{path:path}", include_in_schema=False)
+def dashboard_subpages(path: str):
+    return serve_spa_index()
 
 
 @router.get("/admin", include_in_schema=False)
