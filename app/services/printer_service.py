@@ -138,26 +138,68 @@ def fetch_printer_jobs(printer_name: str) -> List[dict]:
         return []
     
     try:
-        handle = win32print.OpenPrinter(printer_name)
+        # 尝试以管理员权限打开，以便查看所有任务（不仅是自己的）
+        try:
+            handle = win32print.OpenPrinter(printer_name, {"DesiredAccess": win32print.PRINTER_ACCESS_ADMINISTER})
+        except Exception:
+            # 失败则回退到默认权限
+            handle = win32print.OpenPrinter(printer_name)
+
         try:
             # EnumJobs(hPrinter, FirstJob, NoJobs, Level)
             jobs = win32print.EnumJobs(handle, 0, -1, 1)
+            
+            # 常见任务状态映射
+            JOB_STATUS_PAUSED = 0x00000001
+            JOB_STATUS_ERROR = 0x00000002
+            JOB_STATUS_DELETING = 0x00000004
+            JOB_STATUS_SPOOLING = 0x00000008
+            JOB_STATUS_PRINTING = 0x00000010
+            JOB_STATUS_OFFLINE = 0x00000020
+            JOB_STATUS_PAPEROUT = 0x00000040
+            JOB_STATUS_PRINTED = 0x00000080
+            JOB_STATUS_DELETED = 0x00000100
+            JOB_STATUS_BLOCKED_DEVQ = 0x00000200
+            JOB_STATUS_USER_INTERVENTION = 0x00000400
+            JOB_STATUS_RESTART = 0x00000800
+            JOB_STATUS_COMPLETE = 0x00001000
+            JOB_STATUS_RETAINED = 0x00002000
+            
             result = []
             for job in jobs:
+                status_code = job['Status']
+                status_str = job.get('pStatus') or ''
+                
+                if not status_str:
+                    s_parts = []
+                    if status_code & JOB_STATUS_PAUSED: s_parts.append("暂停")
+                    if status_code & JOB_STATUS_ERROR: s_parts.append("错误")
+                    if status_code & JOB_STATUS_DELETING: s_parts.append("正在删除")
+                    if status_code & JOB_STATUS_SPOOLING: s_parts.append("正在后台处理")
+                    if status_code & JOB_STATUS_PRINTING: s_parts.append("正在打印")
+                    if status_code & JOB_STATUS_OFFLINE: s_parts.append("脱机")
+                    if status_code & JOB_STATUS_PAPEROUT: s_parts.append("缺纸")
+                    if status_code & JOB_STATUS_PRINTED: s_parts.append("已打印")
+                    
+                    if not s_parts:
+                        s_parts.append("排队中")
+                    status_str = ", ".join(s_parts)
+
                 result.append({
                     "id": job['JobId'],
                     "document": job['pDocument'],
                     "user": job['pUserName'],
-                    "status": job['Status'], # 简单状态描述，也可以进一步解析
-                    "status_string": job.get('pStatus', ''),
-                    "submitted": job['Submitted'],
+                    "status": status_code,
+                    "status_string": status_str,
+                    "submitted": str(job['Submitted']),
                     "pages": job['TotalPages'],
-                    "size": job['Size']
+                    "size": job.get('Size', 0)
                 })
             return result
         finally:
             win32print.ClosePrinter(handle)
-    except Exception:
+    except Exception as e:
+        print(f"Error fetching jobs: {e}")
         return []
 
 
