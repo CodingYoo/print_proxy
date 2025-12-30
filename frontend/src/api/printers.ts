@@ -90,4 +90,9 @@ export const printersApi = {
   deleteMaintenanceLog: async (printerId: number, logId: number): Promise<void> => {
     await apiClient.delete(`/printers/${printerId}/maintenance/${logId}`)
   },
+
+  delete: async (id: number) => {
+    const res = await apiClient.delete(`/printers/${id}`)
+    return res.data
+  }
 }

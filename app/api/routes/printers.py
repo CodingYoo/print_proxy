@@ -64,6 +64,22 @@ def set_default_printer(
     return PrinterRead.from_orm(printer)
 
 
+@router.delete("/{printer_id}")
+def delete_printer(
+    printer_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_admin),
+):
+    """从数据库中移除打印机 (不影响系统打印机)"""
+    printer = db.query(Printer).filter(Printer.id == printer_id).first()
+    if not printer:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="打印机不存在")
+    
+    db.delete(printer)
+    db.commit()
+    return {"message": "打印机已移除"}
+
+
 @router.get("/{printer_id}/status")
 def get_printer_status(
     printer_id: int,
