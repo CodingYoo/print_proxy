@@ -1,31 +1,36 @@
 import { useAuthStore } from '@/store'
 
-export function Header() {
+interface HeaderProps {
+  onMenuClick: () => void
+}
+
+export function Header({ onMenuClick }: HeaderProps) {
   const { user, logout } = useAuthStore()
 
   return (
-    <header className="h-20 bg-white shadow-sm flex items-center justify-between px-6 md:px-10">
-      <div>
-        <h1 className="text-2xl font-semibold text-slate-900">PrintProxy 控制台</h1>
-        <p className="text-sm text-slate-500">统一管理打印机、打印任务与操作日志</p>
-      </div>
-      <div className="flex items-center space-x-4">
-        <div className="hidden sm:flex items-center space-x-3 bg-slate-100 rounded-full px-4 py-1.5">
-          <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-          </svg>
-          <span className="text-sm font-medium text-slate-600">
-            {user?.full_name || user?.username || '-'}
-          </span>
-        </div>
-        <button
-          onClick={logout}
-          className="md:hidden inline-flex items-center justify-center h-10 w-10 rounded-full bg-slate-900 text-white"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+    <header className="sticky top-0 z-30 h-12 bg-white border-b border-slate-200 flex items-center justify-between px-4">
+      <div className="flex items-center space-x-3">
+        <button onClick={onMenuClick} className="md:hidden p-1.5 rounded hover:bg-slate-100">
+          <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
+        <h1 className="text-sm font-semibold text-slate-800">控制台</h1>
+      </div>
+
+      <div className="flex items-center space-x-3">
+        <div className="hidden sm:flex items-center space-x-1.5 px-2 py-1 rounded-full bg-emerald-50 border border-emerald-200">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="text-[10px] font-medium text-emerald-700">运行中</span>
+        </div>
+        <div className="flex items-center space-x-2 pl-3 border-l border-slate-200">
+          <span className="text-xs text-slate-600 hidden sm:block">{user?.username}</span>
+          <button onClick={logout} className="p-1.5 rounded text-slate-400 hover:text-rose-500 hover:bg-rose-50">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+          </button>
+        </div>
       </div>
     </header>
   )

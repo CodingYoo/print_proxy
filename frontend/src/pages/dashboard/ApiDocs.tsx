@@ -1,82 +1,77 @@
-import { Card, Table, Badge } from '@/components/ui'
+import { Card } from '@/components/ui'
 
 const API_ROUTES = [
-  { method: 'POST', path: '/auth/token', desc: '获取访问令牌', auth: '无' },
-  { method: 'POST', path: '/auth/users', desc: '创建用户', auth: '管理员' },
-  { method: 'GET', path: '/auth/me', desc: '当前用户信息', auth: 'Bearer' },
-  { method: 'POST', path: '/auth/users/{id}/api-key', desc: '生成 API Key', auth: '管理员' },
-  { method: 'GET', path: '/printers/', desc: '打印机列表', auth: 'Bearer' },
-  { method: 'POST', path: '/printers/sync', desc: '同步打印机', auth: '管理员' },
-  { method: 'PUT', path: '/printers/{id}', desc: '更新打印机', auth: '管理员' },
-  { method: 'POST', path: '/printers/{id}/default', desc: '设为默认打印机', auth: '管理员' },
-  { method: 'POST', path: '/jobs/', desc: '创建打印任务', auth: 'Bearer 或 API Key' },
-  { method: 'GET', path: '/jobs/', desc: '任务列表', auth: 'Bearer' },
-  { method: 'GET', path: '/jobs/{id}', desc: '任务详情', auth: 'Bearer' },
-  { method: 'PATCH', path: '/jobs/{id}', desc: '更新任务', auth: '任务所有者/管理员' },
-  { method: 'POST', path: '/jobs/{id}/cancel', desc: '取消任务', auth: '任务所有者/管理员' },
-  { method: 'GET', path: '/jobs/{id}/status', desc: '任务状态', auth: 'Bearer' },
-  { method: 'GET', path: '/jobs/{id}/preview', desc: '任务预览', auth: '任务所有者/管理员' },
-  { method: 'GET', path: '/logs/', desc: '日志查询', auth: 'Bearer' },
+  { method: 'POST', path: '/auth/token', desc: '获取令牌' },
+  { method: 'GET', path: '/auth/me', desc: '当前用户' },
+  { method: 'GET', path: '/printers/', desc: '打印机列表' },
+  { method: 'POST', path: '/printers/sync', desc: '同步打印机' },
+  { method: 'POST', path: '/printers/{id}/default', desc: '设为默认' },
+  { method: 'POST', path: '/jobs/', desc: '创建任务' },
+  { method: 'GET', path: '/jobs/', desc: '任务列表' },
+  { method: 'POST', path: '/jobs/{id}/cancel', desc: '取消任务' },
+  { method: 'GET', path: '/jobs/{id}/preview', desc: '预览' },
+  { method: 'GET', path: '/logs/', desc: '日志查询' },
 ]
 
-function methodVariant(method: string): 'success' | 'info' | 'warning' | 'error' | 'default' {
-  const map: Record<string, 'success' | 'info' | 'warning' | 'error'> = {
-    GET: 'success',
-    POST: 'info',
-    PUT: 'warning',
-    PATCH: 'warning',
-    DELETE: 'error',
+function methodColor(method: string) {
+  const colors: Record<string, string> = {
+    GET: 'bg-emerald-100 text-emerald-700',
+    POST: 'bg-blue-100 text-blue-700',
+    PUT: 'bg-amber-100 text-amber-700',
+    DELETE: 'bg-rose-100 text-rose-700',
   }
-  return map[method] || 'default'
+  return colors[method] || 'bg-slate-100 text-slate-700'
 }
 
 export function ApiDocsPage() {
-  const columns = [
-    {
-      key: 'method',
-      title: '方法',
-      render: (r: (typeof API_ROUTES)[0]) => <Badge variant={methodVariant(r.method)}>{r.method}</Badge>,
-    },
-    {
-      key: 'path',
-      title: '路径',
-      render: (r: (typeof API_ROUTES)[0]) => <code className="text-sm bg-slate-100 px-2 py-1 rounded">/api{r.path}</code>,
-    },
-    { key: 'desc', title: '描述' },
-    { key: 'auth', title: '认证方式' },
-  ]
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
-        <h2 className="text-2xl font-semibold text-slate-900">API 接口</h2>
-        <p className="text-sm text-slate-500">
-          完整的 API 文档请访问{' '}
-          <a href="/docs" target="_blank" className="text-blue-600 hover:underline">
-            /docs
-          </a>{' '}
-          (Swagger UI)
+        <h2 className="text-lg font-bold text-slate-900">API 接口</h2>
+        <p className="text-xs text-slate-500">
+          完整文档: <a href="/docs" target="_blank" className="text-blue-600 hover:underline">/docs</a>
         </p>
       </div>
 
       <Card padding="none">
-        <Table columns={columns} data={API_ROUTES} rowKey="path" />
+        <div className="divide-y divide-slate-100">
+          {API_ROUTES.map((route, idx) => (
+            <div key={idx} className="px-3 py-2 hover:bg-slate-50 flex items-center space-x-3">
+              <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${methodColor(route.method)}`}>{route.method}</span>
+              <code className="text-xs font-mono text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded">/api{route.path}</code>
+              <span className="text-xs text-slate-500">{route.desc}</span>
+            </div>
+          ))}
+        </div>
       </Card>
 
-      <Card>
-        <h3 className="text-lg font-semibold mb-4">使用示例</h3>
-        <pre className="bg-slate-900 text-slate-100 p-4 rounded-xl text-sm overflow-x-auto">
-{`# 1. 获取访问令牌
+      <Card className="p-4">
+        <h3 className="text-sm font-semibold text-slate-900 mb-2">示例</h3>
+        <pre className="bg-slate-900 text-slate-300 p-3 rounded-lg text-[10px] overflow-x-auto">
+{`# 获取令牌
 curl -X POST http://localhost:8568/api/auth/token \\
   -d "username=admin&password=admin123&grant_type=password"
 
-# 2. 创建打印任务
+# 创建任务
 curl -X POST http://localhost:8568/api/jobs/ \\
   -H "Authorization: Bearer <token>" \\
   -H "Content-Type: application/json" \\
-  -d '{"title":"测试打印","file_type":"png","content_base64":"..."}'`}
+  -d '{"title":"测试","file_type":"png","content_base64":"..."}'`}
         </pre>
       </Card>
+
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { href: '/docs', label: 'Swagger UI', desc: '交互式文档', color: 'blue' },
+          { href: '/redoc', label: 'ReDoc', desc: '参考文档', color: 'emerald' },
+          { href: '/openapi.json', label: 'OpenAPI', desc: 'JSON Schema', color: 'violet' },
+        ].map((link) => (
+          <a key={link.href} href={link.href} target="_blank" className="p-3 rounded-lg border border-slate-200 hover:border-blue-300 hover:shadow transition-all">
+            <p className="text-xs font-medium text-slate-900">{link.label}</p>
+            <p className="text-[10px] text-slate-500">{link.desc}</p>
+          </a>
+        ))}
+      </div>
     </div>
   )
 }
