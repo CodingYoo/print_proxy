@@ -14,4 +14,6 @@ class Printer(Base):
     is_default = Column(Boolean, default=False)
     status = Column(String(50), default="unknown")
     location = Column(String(200), nullable=True)
+    alias = Column(String(200), nullable=True)
+    description = Column(String(500), nullable=True)
     created_at = Column(DateTime(timezone=True), default=now_shanghai, nullable=False)

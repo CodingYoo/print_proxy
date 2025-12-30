@@ -11,6 +11,8 @@ class PrinterBase(BaseModel):
     is_default: bool = False
     status: Optional[str] = None
     location: Optional[str] = Field(default=None, max_length=200)
+    alias: Optional[str] = Field(default=None, max_length=200)
+    description: Optional[str] = Field(default=None, max_length=500)
 
 
 class PrinterCreate(PrinterBase):
