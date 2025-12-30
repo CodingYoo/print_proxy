@@ -225,6 +225,9 @@ def _prepare_print_payload(job: PrintJob) -> tuple[str, str | bytes]:
         return "image_gdi", job.content
     # SVG 支持已移除
     if file_type == "pdf":
+        # 如果安装了 PyMuPDF (fitz)，优先使用原生 GDI 打印，避免依赖系统 PDF 阅读器
+        if fitz:
+            return "pdf_gdi", job.content
         path = _prepare_temp_file(job.content, suffix=".pdf")
         return "file", path
     if file_type in WORD_FILE_TYPES:
@@ -404,6 +407,117 @@ def _print_image_with_gdi(
         hdc.DeleteDC()
 
 
+def _print_pdf_with_gdi(
+    content: bytes, 
+    printer_name: str, 
+    copies: int, 
+    title: Optional[str],
+    media_size: Optional[str] = None,
+    color_mode: Optional[str] = None,
+    fit_mode: str = "fill",
+    auto_rotate: bool = True,
+    enhance_quality: bool = True
+) -> None:
+    if not win32print or not win32ui or not win32con:
+        raise RuntimeError("缺少打印所需的 Win32 模块")
+    if not ImageWin:
+        raise RuntimeError("缺少 Pillow ImageWin 模块，无法打印图片")
+    if not fitz:
+        raise RuntimeError("缺少 PyMuPDF (fitz) 模块，无法原生打印 PDF")
+
+    printable_title = title or "PDF Print Job"
+
+    # 初始化打印机 DC
+    hdc = win32ui.CreateDC()
+    try:
+        hdc.CreatePrinterDC(printer_name)
+
+        # 尝试解析自定义尺寸
+        custom_size = parse_media_size(media_size)
+        if custom_size:
+            printable_width, printable_height = custom_size
+            logger.info(f"使用自定义打印尺寸: {printable_width}x{printable_height} 像素")
+        else:
+            printable_width = hdc.GetDeviceCaps(win32con.HORZRES)
+            printable_height = hdc.GetDeviceCaps(win32con.VERTRES)
+            logger.info(f"使用打印机默认尺寸: {printable_width}x{printable_height} 像素")
+        
+        if printable_width <= 0 or printable_height <= 0:
+            raise RuntimeError("打印机可打印区域无效")
+
+        offset_x = hdc.GetDeviceCaps(win32con.PHYSICALOFFSETX)
+        offset_y = hdc.GetDeviceCaps(win32con.PHYSICALOFFSETY)
+
+        # 打开 PDF 文档
+        with fitz.open(stream=content, filetype="pdf") as doc:
+            doc_started = False
+            try:
+                hdc.StartDoc(printable_title)
+                doc_started = True
+
+                for _ in range(max(1, copies)):
+                    for page_num in range(doc.page_count):
+                        page = doc.load_page(page_num)
+                        
+                        # 渲染 PDF 页面为高分辨率图像 (300 DPI)
+                        # Matrix(2, 2) 大约是 144 DPI (72 * 2)，我们需要更高质量
+                        # 目标 DPI 假设为 300，缩放因子 = 300 / 72 ≈ 4.16
+                        zoom = 203 / 72  # 使用标准打印机 203 DPI 作为基准
+                        if enhance_quality:
+                            zoom = 300 / 72  # 高质量模式
+                        
+                        mat = fitz.Matrix(zoom, zoom)
+                        pix = page.get_pixmap(matrix=mat)
+                        
+                        # 转换为 PIL Image
+                        img_data = pix.tobytes("png")
+                        with Image.open(io.BytesIO(img_data)) as img:
+                            image = img.convert("RGB")
+                            
+                            # Log page info
+                            logger.info(f"正在打印第 {page_num + 1}/{doc.page_count} 页 (原始尺寸: {image.width}x{image.height})")
+
+                            # 自动旋转
+                            if auto_rotate and should_rotate_image(image.width, image.height, printable_width, printable_height):
+                                image = image.rotate(90, expand=True)
+
+                            # 优化图片 (如果开启)
+                            if enhance_quality:
+                                image = optimize_image_for_print(
+                                    image,
+                                    target_dpi=300, # 既然我们已经渲染为高DPI，这里保持一致
+                                    color_mode=color_mode,
+                                    enhance_quality=True
+                                )
+                            else:
+                                if color_mode and color_mode.lower() in ["monochrome", "mono", "bw"]:
+                                    image = image.convert("1")
+                                elif color_mode and color_mode.lower() in ["grayscale", "gray"]:
+                                    image = image.convert("L")
+
+                            # 计算绘制坐标 (居中)
+                            draw_left = offset_x + max(0, (printable_width - image.width) // 2)
+                            draw_top = offset_y + max(0, (printable_height - image.height) // 2)
+                            draw_right = draw_left + image.width
+                            draw_bottom = draw_top + image.height
+
+                            # 开始打印页面
+                            hdc.StartPage()
+                            try:
+                                dib = ImageWin.Dib(image)
+                                dib.draw(hdc.GetHandleOutput(), (draw_left, draw_top, draw_right, draw_bottom))
+                            finally:
+                                hdc.EndPage()
+
+                hdc.EndDoc()
+            except Exception:
+                if doc_started:
+                    hdc.AbortDoc()
+                raise
+    finally:
+        hdc.DeleteDC()
+
+
 def _send_to_printer(job: PrintJob) -> None:
     if os.environ.get("PRINT_PROXY_DISABLE_PRINT") == "1":
         logger.info("测试模式下跳过实际打印: {}", job.id)
@@ -424,6 +538,30 @@ def _send_to_printer(job: PrintJob) -> None:
         raise RuntimeError("未找到可用打印机")
 
     mode, payload = _prepare_print_payload(job)
+
+    # 优先处理 PDF GDI 模式
+    if mode == "pdf_gdi":
+        if not isinstance(payload, (bytes, bytearray)):
+            raise RuntimeError("无效的打印内容类型")
+
+        fit_mode = getattr(job, 'fit_mode', 'fill') or 'fill'
+        auto_rotate_value = getattr(job, 'auto_rotate', 1)
+        enhance_quality_value = getattr(job, 'enhance_quality', 1)
+        auto_rotate = bool(auto_rotate_value) if auto_rotate_value is not None else True
+        enhance_quality = bool(enhance_quality_value) if enhance_quality_value is not None else True
+
+        _print_pdf_with_gdi(
+            bytes(payload),
+            printer_name,
+            job.copies,
+            job.title,
+            media_size=job.media_size,
+            color_mode=job.color_mode,
+            fit_mode=fit_mode,
+            auto_rotate=auto_rotate,
+            enhance_quality=enhance_quality
+        )
+        return
 
     if mode == "raw":
         try:
