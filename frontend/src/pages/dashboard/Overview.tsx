@@ -48,9 +48,10 @@ export function OverviewPage() {
   }
 
   const defaultPrinter = printers.find((p) => p.is_default)
-  const completedJobs = jobs.filter((j) => j.status === 'completed').length
+  const completedJobsCount = jobs.filter((j) => j.status === 'completed').length
   const failedJobs = jobs.filter((j) => j.status === 'failed').length
   const processingJobs = jobs.filter((j) => ['processing', 'queued'].includes(j.status)).length
+  const totalPrints = jobs.reduce((acc, job) => acc + (job.copies || 0), 0)
 
   return (
     <div className="space-y-6">
@@ -63,8 +64,8 @@ export function OverviewPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: '在线打印机', value: printers.length, sub: defaultPrinter ? `默认: ${defaultPrinter.name}` : '未设置默认', icon: 'M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z', color: 'text-indigo-600', bg: 'bg-indigo-50' },
-          { label: '总任务数', value: jobs.length, sub: `活跃中: ${processingJobs}`, icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4', color: 'text-violet-600', bg: 'bg-violet-50' },
-          { label: '完成率', value: `${jobs.length ? Math.round((completedJobs / jobs.length) * 100) : 0}%`, sub: `已完成: ${completedJobs}`, icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', color: 'text-emerald-600', bg: 'bg-emerald-50' },
+          { label: '打印次数', value: totalPrints, sub: `活跃中: ${processingJobs}`, icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4', color: 'text-violet-600', bg: 'bg-violet-50' },
+          { label: '完成率', value: `${jobs.length ? Math.round((completedJobsCount / jobs.length) * 100) : 0}%`, sub: `已完成: ${completedJobsCount}`, icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', color: 'text-emerald-600', bg: 'bg-emerald-50' },
           { label: '异常任务', value: failedJobs, sub: failedJobs > 0 ? '请查看日志' : '系统正常', icon: 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z', color: 'text-rose-600', bg: 'bg-rose-50' },
         ].map((stat) => (
           <Card key={stat.label} padding="sm" className="hover:shadow-md transition-all duration-200 border-slate-100">

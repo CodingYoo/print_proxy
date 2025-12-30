@@ -14,4 +14,8 @@ export const logsApi = {
     const response = await apiClient.get<LogEntry[]>(`/logs/${query}`)
     return response.data
   },
+
+  clearAll: async (): Promise<void> => {
+    await apiClient.delete('/logs/')
+  },
 }

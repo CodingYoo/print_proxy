@@ -57,6 +57,28 @@ export function JobsPage() {
     }
   }
 
+  const handleDelete = async (id: number) => {
+    if (!confirm('确定删除该任务吗？此操作不可恢复。')) return
+    try {
+      await jobsApi.deleteJob(id)
+      await loadData()
+      showMessage('已删除', 'success')
+    } catch {
+      showMessage('删除失败', 'error')
+    }
+  }
+
+  const handleClearAll = async () => {
+    if (!confirm('确定清空所有打印任务吗？此操作不可恢复。')) return
+    try {
+      await jobsApi.clearAll()
+      await loadData()
+      showMessage('已清空所有任务', 'success')
+    } catch {
+      showMessage('清空失败', 'error')
+    }
+  }
+
   const handlePreview = async (id: number, fileType: string) => {
     try {
       const blob = await jobsApi.getPreview(id)
@@ -191,6 +213,11 @@ export function JobsPage() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
             </Button>
           )}
+          {!['queued', 'processing'].includes(job.status) && (
+            <Button size="icon" variant="ghost" className="text-rose-500 hover:text-rose-600 hover:bg-rose-50" onClick={(e) => { e.stopPropagation(); handleDelete(job.id) }} title="删除">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+            </Button>
+          )}
         </div>
       )
     }
@@ -207,6 +234,10 @@ export function JobsPage() {
           <Button size="sm" variant="secondary" onClick={loadData}>
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
             刷新
+          </Button>
+          <Button size="sm" variant="ghost" className="text-rose-500 hover:text-rose-600 hover:bg-rose-50" onClick={handleClearAll}>
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+            全部清空
           </Button>
           <Button size="sm" onClick={() => setShowForm(true)} className="shadow-sm">
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>

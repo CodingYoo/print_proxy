@@ -192,6 +192,24 @@ def cancel_print_job(db: Session, job: PrintJob) -> PrintJob:
     return job
 
 
+def delete_print_job(db: Session, job_id: int) -> None:
+    job = get_print_job(db, job_id)
+    # 如果任务正在排队或处理中，先取消
+    if job.status in {"queued", "processing"}:
+        job_queue.cancel(job.id)
+    db.delete(job)
+    db.commit()
+
+
+def clear_all_print_jobs(db: Session) -> int:
+    # 停止所有正在运行的任务是不可能的，只能清空数据库
+    # 这里我们只删除非 processing 的任务？或者全部删除？
+    # 通常全部删除意味着清空所有痕迹。
+    count = db.query(PrintJob).delete()
+    db.commit()
+    return count
+
+
 def _prepare_temp_file(content: bytes, suffix: str) -> str:
     fd, path = tempfile.mkstemp(suffix=suffix)
     with os.fdopen(fd, "wb") as tmp:

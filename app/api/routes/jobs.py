@@ -73,6 +73,30 @@ def cancel_job(
     return PrintJobRead.from_orm(job)
 
 
+@router.delete("/", status_code=status.HTTP_204_NO_CONTENT)
+def clear_jobs(
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user),
+):
+    if not current_user.is_admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="只有管理员可以清空任务")
+    job_service.clear_all_print_jobs(db)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.delete("/{job_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_job(
+    job_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user),
+):
+    job = job_service.get_print_job(db, job_id)
+    if current_user.id != job.owner_id and not current_user.is_admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="没有权限删除此任务")
+    job_service.delete_print_job(db, job_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 @router.get("/{job_id}/status", response_model=PrintJobStatus)
 def get_job_status(
     job_id: int,

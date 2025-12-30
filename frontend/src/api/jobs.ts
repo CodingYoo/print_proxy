@@ -54,4 +54,12 @@ export const jobsApi = {
     const response = await apiClient.get(`/jobs/${id}/preview`, { responseType: 'blob' })
     return response.data
   },
+
+  deleteJob: async (id: number): Promise<void> => {
+    await apiClient.delete(`/jobs/${id}`)
+  },
+
+  clearAll: async (): Promise<void> => {
+    await apiClient.delete('/jobs/')
+  },
 }

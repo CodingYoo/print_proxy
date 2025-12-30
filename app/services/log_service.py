@@ -18,3 +18,9 @@ def list_job_logs(db: Session, job_id: int | None = None):
     if job_id is not None:
         query = query.filter(JobLog.job_id == job_id)
     return query.order_by(JobLog.created_at.desc()).all()
+
+
+def clear_all_logs(db: Session) -> int:
+    count = db.query(JobLog).delete()
+    db.commit()
+    return count
