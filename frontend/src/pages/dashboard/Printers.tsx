@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Card, Button, Badge, Modal, Input, Table } from '@/components/ui'
-import { printersApi, Printer, PrinterJob, MaintenanceLog } from '@/api'
+import { printersApi, Printer, PrinterJob, MaintenanceLog, PrinterStatus } from '@/api'
 import { useAuthStore, useMessageStore } from '@/store'
 import { cn } from '@/lib/utils'
 
@@ -25,13 +25,21 @@ export function PrintersPage() {
   const [loadingMaintenance, setLoadingMaintenance] = useState(false)
   const [maintenanceForm, setMaintenanceForm] = useState({ title: '', description: '', cost: 0 })
 
+  // Detailed Status State
+  const [statuses, setStatuses] = useState<Record<number, PrinterStatus>>({})
+
   // Edit Form State
   const [editForm, setEditForm] = useState({ alias: '', location: '', description: '', capabilities: '' })
 
   const loadPrinters = async () => {
     try {
       const data = await printersApi.list()
-      setPrinters(data)
+      // Sort: Default printer first, then by ID or Name
+      const sorted = data.sort((a, b) => {
+        if (a.is_default === b.is_default) return 0
+        return a.is_default ? -1 : 1
+      })
+      setPrinters(sorted)
     } catch {
       showMessage('加载失败', 'error')
     } finally {
@@ -40,6 +48,29 @@ export function PrintersPage() {
   }
 
   useEffect(() => { loadPrinters() }, [])
+
+  // Fetch detailed status for all printers
+  useEffect(() => {
+    if (printers.length === 0) return
+
+    const fetchStatuses = async () => {
+      const newStatuses: Record<number, PrinterStatus> = {}
+      await Promise.all(printers.map(async (p) => {
+        try {
+          const status = await printersApi.getStatus(p.id)
+          newStatuses[p.id] = status
+        } catch (e) {
+          console.error(`Failed to fetch status for ${p.name}`, e)
+        }
+      }))
+      setStatuses(newStatuses)
+    }
+
+    fetchStatuses()
+    // Poll every 10 seconds
+    const interval = setInterval(fetchStatuses, 10000)
+    return () => clearInterval(interval)
+  }, [printers])
 
   const handleSync = async () => {
     setSyncing(true)
@@ -191,22 +222,38 @@ export function PrintersPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {printers.map((printer) => {
+          const detailedStatus = statuses[printer.id]
+          // If we have detailed status, use it to determine online/offline/error
+          // If code is 0 (Ready) or 0x00400000 (Unknown?) often means basically ok or idle?
+          // Actually status 0 is Ready. 
+          // If detailedStatus is missing, fallback to DB status.
+
+          const hasError = detailedStatus && detailedStatus.code !== 0 && detailedStatus.messages.length > 0 && !detailedStatus.messages.includes('就绪')
           const isOnline = printer.status === 'online'
+          const statusText = hasError ? detailedStatus.messages.join(', ') : (isOnline ? '就绪' : '离线')
+          const badgeVariant = hasError ? 'destructive' : (isOnline ? 'success' : 'secondary')
+
           return (
             <Card
               key={printer.id}
               padding="none"
               className={cn(
                 "group relative overflow-hidden transition-all duration-300 border-0 shadow-sm ring-1 ring-slate-200 hover:shadow-xl hover:-translate-y-1 hover:ring-indigo-100 bg-white",
-                printer.is_default && "ring-2 ring-indigo-500/20 shadow-md"
+                printer.is_default && "ring-2 ring-indigo-500/20 shadow-md",
+                hasError && "ring-1 ring-red-200 bg-red-50/10"
               )}
             >
-              <div className="absolute top-0 right-0 p-4 z-10">
+              <div className="absolute top-0 right-0 p-4 z-10 flex gap-2">
+                {detailedStatus && detailedStatus.jobs_count !== undefined && detailedStatus.jobs_count > 0 && (
+                  <Badge variant="warning" className="shadow-sm">
+                    {detailedStatus.jobs_count} 任务
+                  </Badge>
+                )}
                 {printer.is_default ? (
                   <Badge variant="default" className="shadow-sm bg-indigo-600">默认</Badge>
                 ) : (
-                  <Badge variant={isOnline ? 'success' : 'secondary'} className={cn("backdrop-blur-sm", !isOnline && "bg-slate-100/80")}>
-                    {printer.status || '未知'}
+                  <Badge variant={badgeVariant} className={cn("backdrop-blur-sm", !isOnline && "bg-slate-100/80")}>
+                    {statusText}
                   </Badge>
                 )}
               </div>
@@ -254,32 +301,21 @@ export function PrintersPage() {
                 </div>
 
                 <div className="mt-6 pt-4 border-t border-slate-50 flex items-center justify-between text-xs text-slate-500">
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
                     {user?.is_admin && (
                       <>
                         <button onClick={() => openEdit(printer)} className="hover:text-indigo-600 transition-colors">编辑</button>
                         <button onClick={() => openQueue(printer)} className="hover:text-indigo-600 transition-colors">队列</button>
                         <button onClick={() => openMaintenance(printer)} className="hover:text-indigo-600 transition-colors">维护</button>
                         <button onClick={() => handleTestPage(printer.id)} className="hover:text-indigo-600 transition-colors">测试页</button>
+                        {!printer.is_default && (
+                          <button onClick={() => handleSetDefault(printer.id)} className="hover:text-indigo-600 transition-colors text-indigo-500 font-medium">设为默认</button>
+                        )}
                       </>
                     )}
                   </div>
                 </div>
               </div>
-
-              {/* Action Overlay */}
-              {user?.is_admin && !printer.is_default && (
-                <div className="absolute bottom-0 left-0 w-full p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-white/90 backdrop-blur-sm border-t border-slate-100">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700"
-                    onClick={() => handleSetDefault(printer.id)}
-                  >
-                    设为默认设备
-                  </Button>
-                </div>
-              )}
             </Card>
           )
         })}

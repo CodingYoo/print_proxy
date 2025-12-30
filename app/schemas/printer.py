@@ -23,6 +23,9 @@ class PrinterUpdate(BaseModel):
     is_default: Optional[bool] = None
     status: Optional[str] = None
     location: Optional[str] = Field(default=None, max_length=200)
+    alias: Optional[str] = Field(default=None, max_length=200)
+    description: Optional[str] = Field(default=None, max_length=500)
+    capabilities: Optional[str] = Field(default=None, max_length=500)
 
 
     model_config = ConfigDict(from_attributes=True)
