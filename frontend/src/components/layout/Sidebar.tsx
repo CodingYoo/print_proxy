@@ -1,6 +1,9 @@
+import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useAuthStore } from '@/store'
 import { cn } from '@/lib/utils'
+import { Modal } from '@/components/ui/Modal'
+import { Button } from '@/components/ui/Button'
 
 const navItems = [
   { path: '/dashboard', label: '总览', exact: true, icon: (props: any) => <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg> },
@@ -17,6 +20,12 @@ interface SidebarProps {
 
 export function Sidebar({ open, onClose }: SidebarProps) {
   const { user, logout } = useAuthStore()
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false)
+
+  const handleLogout = () => {
+    logout()
+    window.location.href = '/login'
+  }
 
   return (
     <>
@@ -85,12 +94,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             </div>
           </div>
           <button
-            onClick={() => {
-              if (window.confirm('确定要退出登录吗？')) {
-                logout()
-                window.location.href = '/login'
-              }
-            }}
+            onClick={() => setIsLogoutModalOpen(true)}
             className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-rose-600 hover:border-rose-200 transition-colors shadow-sm"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -100,6 +104,32 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           </button>
         </div>
       </aside>
+
+      <Modal
+        open={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        title="确认退出"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-slate-600">
+            您确定要退出当前账号吗？退出后需要重新登录才能访问系统。
+          </p>
+          <div className="flex justify-end gap-3 mt-6">
+            <Button
+              variant="secondary"
+              onClick={() => setIsLogoutModalOpen(false)}
+            >
+              取消
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleLogout}
+            >
+              确定退出
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </>
   )
 }
