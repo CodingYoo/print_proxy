@@ -96,22 +96,18 @@ export function JobsPage() {
             byteNumbers[i] = byteCharacters.charCodeAt(i)
           }
           const byteArray = new Uint8Array(byteNumbers)
-          const mime = fileType === 'pdf' ? 'application/pdf' :
-            fileType === 'png' ? 'image/png' :
-              ['jpg', 'jpeg'].includes(fileType) ? 'image/jpeg' : 'text/plain'
+          const mime = fileType === 'pdf' ? 'application/pdf' : 'image/png'
           finalBlob = new Blob([byteArray], { type: mime })
         } catch (e) {
           console.error('Base64 decode failed, using original blob', e)
         }
       } else {
-        // Verify/Enforce MIME type if it's binary
-        const mime = fileType === 'pdf' ? 'application/pdf' :
-          fileType === 'png' ? 'image/png' :
-            ['jpg', 'jpeg'].includes(fileType) ? 'image/jpeg' : 'text/plain'
+        // Fallback
+        const mime = fileType === 'pdf' ? 'application/pdf' : 'image/png'
         finalBlob = blob.slice(0, blob.size, mime)
       }
 
-      setPreviewType(finalBlob.type === 'application/pdf' ? 'pdf' : finalBlob.type.startsWith('image/') ? 'image' : 'text')
+      setPreviewType(finalBlob.type === 'application/pdf' ? 'pdf' : 'image')
       setPreviewUrl(URL.createObjectURL(finalBlob))
     } catch (e) {
       console.error(e)

@@ -678,12 +678,6 @@ def generate_preview(job: PrintJob) -> bytes:
         return buffer.getvalue()
     # SVG 支持已移除
     if file_type == "pdf":
-        if not fitz:
-            raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="缺少 PyMuPDF，无法生成 PDF 预览")
-        doc = fitz.open(stream=job.content, filetype="pdf")
-        if doc.page_count == 0:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="PDF 文件无内容")
-        page = doc.load_page(0)
-        pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))
-        return pix.tobytes("png")
+        # 直接返回 PDF 原文件内容，以便前端可以预览所有页面
+        return job.content
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="当前任务不支持预览")
