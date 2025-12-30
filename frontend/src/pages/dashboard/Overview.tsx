@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Card, Badge } from '@/components/ui'
+import { Card, Badge, Table } from '@/components/ui'
 import { printersApi, jobsApi, Printer, PrintJob } from '@/api'
 import { useMessageStore } from '@/store'
 
@@ -41,8 +41,8 @@ export function OverviewPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-40">
-        <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent" />
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-indigo-500 border-t-transparent" />
       </div>
     )
   }
@@ -53,72 +53,93 @@ export function OverviewPage() {
   const processingJobs = jobs.filter((j) => ['processing', 'queued'].includes(j.status)).length
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-bold text-slate-900 tracking-tight">概览</h2>
+        <p className="text-sm text-slate-500">欢迎回来，这里是系统今日概况。</p>
+      </div>
+
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: '打印机', value: printers.length, sub: defaultPrinter?.name || '未设置', color: 'blue' },
-          { label: '任务总数', value: jobs.length, sub: `处理中: ${processingJobs}`, color: 'violet' },
-          { label: '已完成', value: completedJobs, sub: `${jobs.length ? Math.round((completedJobs / jobs.length) * 100) : 0}%`, color: 'emerald' },
-          { label: '失败', value: failedJobs, sub: '查看日志', color: 'rose' },
+          { label: '在线打印机', value: printers.length, sub: defaultPrinter ? `默认: ${defaultPrinter.name}` : '未设置默认', icon: 'M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z', color: 'text-indigo-600', bg: 'bg-indigo-50' },
+          { label: '总任务数', value: jobs.length, sub: `活跃中: ${processingJobs}`, icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4', color: 'text-violet-600', bg: 'bg-violet-50' },
+          { label: '完成率', value: `${jobs.length ? Math.round((completedJobs / jobs.length) * 100) : 0}%`, sub: `已完成: ${completedJobs}`, icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', color: 'text-emerald-600', bg: 'bg-emerald-50' },
+          { label: '异常任务', value: failedJobs, sub: failedJobs > 0 ? '请查看日志' : '系统正常', icon: 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z', color: 'text-rose-600', bg: 'bg-rose-50' },
         ].map((stat) => (
-          <div key={stat.label} className="bg-white rounded-xl border border-slate-200 p-3 hover:shadow-md transition-shadow">
-            <p className="text-[10px] font-medium text-slate-500 uppercase">{stat.label}</p>
-            <p className="text-2xl font-bold text-slate-900 mt-1">{stat.value}</p>
-            <p className="text-[10px] text-slate-400 mt-0.5 truncate">{stat.sub}</p>
-          </div>
+          <Card key={stat.label} padding="sm" className="hover:shadow-md transition-all duration-200 border-slate-100">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{stat.label}</p>
+                <p className="text-2xl font-bold text-slate-900 mt-2">{stat.value}</p>
+              </div>
+              <div className={`p-2 rounded-lg ${stat.bg} ${stat.color}`}>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={stat.icon} />
+                </svg>
+              </div>
+            </div>
+            <p className="text-xs text-slate-400 mt-2 font-medium bg-slate-50 inline-block px-2 py-0.5 rounded">{stat.sub}</p>
+          </Card>
         ))}
       </div>
 
-      {/* Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Jobs */}
-        <Card className="p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-slate-900">最新任务</h2>
-            <Link to="/dashboard/jobs" className="text-xs text-blue-600 hover:text-blue-700">查看全部</Link>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Recent Jobs */}
+        <div className="lg:col-span-2 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-base font-semibold text-slate-900">最新任务</h3>
+            <Link to="/dashboard/jobs" className="text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:underline">查看全部</Link>
           </div>
-          <div className="space-y-2">
-            {jobs.slice(0, 5).map((job) => (
-              <div key={job.id} className="flex items-center justify-between p-2 rounded-lg bg-slate-50 hover:bg-slate-100">
-                <div className="flex items-center space-x-2 min-w-0">
-                  <div className="w-7 h-7 rounded bg-slate-200 flex items-center justify-center">
-                    <span className="text-[9px] font-bold text-slate-500 uppercase">{job.file_type}</span>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-slate-800 truncate">{job.title}</p>
-                    <p className="text-[10px] text-slate-500">份数: {job.copies}</p>
-                  </div>
-                </div>
-                <Badge variant={statusVariant(job.status)}>{translateStatus(job.status)}</Badge>
-              </div>
-            ))}
-            {jobs.length === 0 && <p className="text-xs text-slate-400 text-center py-4">暂无任务</p>}
-          </div>
-        </Card>
+          <Card padding="none" className="overflow-hidden border-slate-200 shadow-sm">
+            <Table
+              data={jobs.slice(0, 5)}
+              rowKey="id"
+              className="border-0 rounded-none shadow-none"
+              columns={[
+                {
+                  title: '文件', key: 'title', className: 'w-[40%]', render: (job) => (
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500 uppercase flex-shrink-0">
+                        {job.file_type}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-medium text-slate-900 truncate max-w-[150px]">{job.title}</p>
+                        <p className="text-[10px] text-slate-400">{job.printer_name || '默认'}</p>
+                      </div>
+                    </div>
+                  )
+                },
+                { title: '状态', key: 'status', render: (job) => <Badge variant={statusVariant(job.status)}>{translateStatus(job.status)}</Badge> },
+                { title: '份数', key: 'copies', className: 'text-slate-500' },
+                { title: '时间', key: 'created_at', className: 'text-slate-400 text-xs', render: (job) => new Date(job.created_at).toLocaleTimeString() },
+              ]}
+            />
+          </Card>
+        </div>
 
-        {/* Printers */}
-        <Card className="p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-slate-900">打印机状态</h2>
-            <Link to="/dashboard/printers" className="text-xs text-blue-600 hover:text-blue-700">管理</Link>
+        {/* Printer Status */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-base font-semibold text-slate-900">打印机队列</h3>
+            <Link to="/dashboard/printers" className="text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:underline">管理</Link>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-3">
             {printers.slice(0, 4).map((printer) => (
-              <div key={printer.id} className="flex items-center justify-between p-2 rounded-lg border border-slate-200">
-                <div className="flex items-center space-x-2">
-                  <div className={`w-1.5 h-1.5 rounded-full ${printer.status === 'online' ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+              <Card key={printer.id} padding="sm" className="flex items-center justify-between hover:border-indigo-200 transition-colors cursor-default">
+                <div className="flex items-center gap-3">
+                  <div className={`w-2.5 h-2.5 rounded-full ring-2 ring-white shadow-sm ${printer.status === 'online' ? 'bg-emerald-500' : 'bg-slate-300'}`} />
                   <div>
-                    <p className="text-xs font-medium text-slate-800">{printer.name}</p>
-                    <p className="text-[10px] text-slate-500">{printer.status || '未知'}</p>
+                    <h4 className="text-sm font-medium text-slate-900">{printer.name}</h4>
+                    <p className="text-[10px] text-slate-500">{printer.status || '未知状态'}</p>
                   </div>
                 </div>
-                {printer.is_default && <span className="px-1.5 py-0.5 text-[9px] font-medium rounded bg-blue-100 text-blue-700">默认</span>}
-              </div>
+                {printer.is_default && <Badge variant="secondary" className="text-[10px]">默认</Badge>}
+              </Card>
             ))}
             {printers.length === 0 && <p className="text-xs text-slate-400 text-center py-4">暂无打印机</p>}
           </div>
-        </Card>
+        </div>
       </div>
     </div>
   )

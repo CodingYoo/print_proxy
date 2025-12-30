@@ -1,21 +1,26 @@
 import { ButtonHTMLAttributes, forwardRef } from 'react'
+import { cn } from '@/lib/utils'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'danger' | 'ghost'
-  size?: 'sm' | 'md'
+  variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'outline' | 'link'
+  size?: 'sm' | 'md' | 'lg' | 'icon'
   loading?: boolean
 }
 
 const variants = {
-  primary: 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm',
-  secondary: 'bg-slate-100 hover:bg-slate-200 text-slate-700',
-  danger: 'bg-rose-600 hover:bg-rose-700 text-white',
-  ghost: 'bg-transparent hover:bg-slate-100 text-slate-600',
+  primary: 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm hover:shadow focus-visible:ring-indigo-500',
+  secondary: 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 shadow-sm focus-visible:ring-slate-500',
+  danger: 'bg-rose-600 hover:bg-rose-700 text-white shadow-sm focus-visible:ring-rose-500',
+  ghost: 'bg-transparent hover:bg-slate-100 text-slate-600 hover:text-slate-900',
+  outline: 'border border-slate-200 bg-transparent hover:bg-slate-100 text-slate-700',
+  link: 'text-indigo-600 underline-offset-4 hover:underline shadow-none p-0 h-auto',
 }
 
 const sizes = {
-  sm: 'px-2 py-1 text-[10px]',
-  md: 'px-3 py-1.5 text-xs',
+  sm: 'h-8 px-3 text-xs',
+  md: 'h-10 px-4 py-2 text-sm',
+  lg: 'h-12 px-8 text-base',
+  icon: 'h-10 w-10 p-0',
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -24,14 +29,16 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         disabled={disabled || loading}
-        className={`inline-flex items-center justify-center rounded-lg font-medium transition
-          ${variants[variant]} ${sizes[size]}
-          ${disabled || loading ? 'opacity-50 cursor-not-allowed' : ''}
-          ${className}`}
+        className={cn(
+          'inline-flex items-center justify-center whitespace-nowrap rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ring-offset-white',
+          variants[variant],
+          sizes[size],
+          className
+        )}
         {...props}
       >
         {loading && (
-          <svg className="animate-spin h-3 w-3 mr-1" viewBox="0 0 24 24">
+          <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
