@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Card, Badge, Select, Button } from '@/components/ui'
+import { Badge, Select, Button, Table } from '@/components/ui'
 import { logsApi, jobsApi, LogEntry, PrintJob } from '@/api'
 import { useMessageStore } from '@/store'
 
@@ -70,30 +70,44 @@ export function LogsPage() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center h-40"><div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent" /></div>
+        <div className="flex items-center justify-center h-40"><div className="animate-spin rounded-full h-8 w-8 border-2 border-indigo-500 border-t-transparent" /></div>
       ) : (
-        <Card padding="none">
-          <div className="divide-y divide-slate-100">
-            {paginatedLogs.map((log) => (
-              <div key={log.id} className="p-3 hover:bg-slate-50 flex items-start space-x-2">
-                <div className={`flex-shrink-0 w-6 h-6 rounded flex items-center justify-center ${log.level === 'error' ? 'bg-rose-100' : log.level === 'warning' ? 'bg-amber-100' : 'bg-blue-100'}`}>
-                  <span className={`text-[10px] font-bold ${log.level === 'error' ? 'text-rose-600' : log.level === 'warning' ? 'text-amber-600' : 'text-blue-600'}`}>
-                    {log.level[0].toUpperCase()}
-                  </span>
+        <Table<LogEntry>
+          columns={[
+            {
+              key: 'level',
+              title: '级别',
+              width: '80px',
+              render: (log) => (
+                <div className="flex items-center gap-2">
+                  <span className={`w-1.5 h-1.5 rounded-full ${log.level === 'error' ? 'bg-rose-500' : log.level === 'warning' ? 'bg-amber-500' : 'bg-blue-500'}`} />
+                  <span className={`text-xs font-medium uppercase ${log.level === 'error' ? 'text-rose-600' : log.level === 'warning' ? 'text-amber-600' : 'text-blue-600'}`}>{log.level}</span>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center space-x-2 mb-0.5">
-                    <Badge variant={levelVariant(log.level)}>{log.level.toUpperCase()}</Badge>
-                    <span className="text-[10px] text-slate-400">任务 #{log.job_id}</span>
-                  </div>
-                  <p className="text-xs text-slate-700">{log.message}</p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">{formatDate(log.created_at)}</p>
+              )
+            },
+            {
+              key: 'message',
+              title: '日志内容',
+              className: 'text-slate-700 font-medium',
+              render: (log) => (
+                <div>
+                  <p>{log.message}</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5 font-mono">ID: {log.id} | Job: #{log.job_id}</p>
                 </div>
-              </div>
-            ))}
-            {paginatedLogs.length === 0 && <div className="p-8 text-center text-xs text-slate-400">暂无日志</div>}
-          </div>
-        </Card>
+              )
+            },
+            {
+              key: 'created_at',
+              title: '时间',
+              width: '180px',
+              className: 'text-slate-500 text-xs tabular-nums',
+              render: (log) => formatDate(log.created_at)
+            }
+          ]}
+          data={paginatedLogs}
+          rowKey="id"
+          emptyText="暂无系统日志"
+        />
       )}
 
       {logs.length > 0 && (
