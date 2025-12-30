@@ -220,110 +220,147 @@ export function PrintersPage() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {printers.map((printer) => {
           const detailedStatus = statuses[printer.id]
-          // If we have detailed status, use it to determine online/offline/error
-          // If code is 0 (Ready) or 0x00400000 (Unknown?) often means basically ok or idle?
-          // Actually status 0 is Ready. 
-          // If detailedStatus is missing, fallback to DB status.
-
           const hasError = detailedStatus && detailedStatus.code !== 0 && detailedStatus.messages.length > 0 && !detailedStatus.messages.includes('就绪')
           const isOnline = printer.status === 'online'
           const statusText = hasError ? detailedStatus.messages.join(', ') : (isOnline ? '就绪' : '离线')
-          const badgeVariant = hasError ? 'destructive' : (isOnline ? 'success' : 'secondary')
 
           return (
-            <Card
+            <div
               key={printer.id}
-              padding="none"
               className={cn(
-                "group relative overflow-hidden transition-all duration-300 border-0 shadow-sm ring-1 ring-slate-200 hover:shadow-xl hover:-translate-y-1 hover:ring-indigo-100 bg-white",
-                printer.is_default && "ring-2 ring-indigo-500/20 shadow-md",
-                hasError && "ring-1 ring-red-200 bg-red-50/10"
+                "group relative bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-lg hover:border-indigo-100 transition-all duration-300 flex flex-col overflow-hidden",
+                printer.is_default && "ring-1 ring-indigo-500 border-indigo-500 shadow-indigo-50"
               )}
             >
-              <div className="absolute top-0 right-0 p-4 z-10 flex gap-2">
-                {detailedStatus && detailedStatus.jobs_count !== undefined && detailedStatus.jobs_count > 0 && (
-                  <Badge variant="warning" className="shadow-sm">
-                    {detailedStatus.jobs_count} 任务
-                  </Badge>
-                )}
-                {printer.is_default ? (
-                  <Badge variant="default" className="shadow-sm bg-indigo-600">默认</Badge>
-                ) : (
-                  <Badge variant={badgeVariant} className={cn("backdrop-blur-sm", !isOnline && "bg-slate-100/80")}>
+              {/* Header Status Bar */}
+              <div className="px-4 py-3 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
+                <div className="flex items-center gap-2">
+                  <span className={cn(
+                    "flex h-2.5 w-2.5 rounded-full ring-2 ring-white",
+                    hasError ? "bg-red-500" : (isOnline ? "bg-emerald-500" : "bg-slate-300")
+                  )} />
+                  <span className={cn("text-xs font-medium", hasError ? "text-red-600" : "text-slate-600")}>
                     {statusText}
+                  </span>
+                </div>
+                {printer.is_default && (
+                  <Badge variant="default" className="text-[10px] h-5 px-2 bg-indigo-600 border-none shadow-none">
+                    默认
                   </Badge>
                 )}
               </div>
 
-              <div className="p-6 pt-8">
-                <div className="flex justify-center mb-6 relative">
-                  <div className={cn(
-                    "w-20 h-20 rounded-2xl flex items-center justify-center transition-all duration-500 group-hover:scale-110",
-                    isOnline ? "bg-indigo-50 text-indigo-600" : "bg-slate-50 text-slate-400"
-                  )}>
-                    <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {/* Main Content */}
+              <div className="p-5 flex flex-col flex-1">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="p-3 bg-indigo-50 rounded-xl">
+                    <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                     </svg>
                   </div>
-                  {isOnline && (
-                    <span className="absolute bottom-1 right-[calc(50%-2.5rem)] flex h-3 w-3">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 ring-2 ring-white"></span>
+                  {detailedStatus?.jobs_count !== undefined && detailedStatus.jobs_count > 0 && (
+                    <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-md border border-amber-100">
+                      {detailedStatus.jobs_count} 任务
                     </span>
                   )}
                 </div>
 
-                <div className="text-center space-y-1 mb-2">
-                  <h3 className="text-lg font-bold text-slate-900 truncate px-2" title={printer.name}>
-                    {printer.alias || printer.name}
-                  </h3>
+                <h3 className="text-base font-bold text-slate-900 mb-1 truncate" title={printer.alias || printer.name}>
+                  {printer.alias || printer.name}
+                </h3>
+
+                <div className="space-y-1 mb-4">
                   {printer.alias && (
-                    <p className="text-xs text-slate-400 font-mono truncate px-4">{printer.name}</p>
+                    <p className="text-xs text-slate-400 font-mono truncate" title={printer.name}>{printer.name}</p>
                   )}
-                  {printer.location && (
-                    <p className="text-xs text-slate-500 flex items-center justify-center gap-1 mt-1">
-                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                  {printer.location ? (
+                    <p className="text-xs text-slate-500 flex items-center gap-1">
+                      <svg className="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                       {printer.location}
                     </p>
-                  )}
-                  {printer.capabilities && (
-                    <div className="flex flex-wrap justify-center gap-1 mt-2 px-2">
-                      {printer.capabilities.split(/[,，]/).map((cap, i) => (
-                        <span key={i} className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-200">
-                          {cap.trim()}
-                        </span>
-                      ))}
-                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-300 italic">未设置位置</p>
                   )}
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-slate-50 flex items-center justify-between text-xs text-slate-500">
-                  <div className="flex gap-2 flex-wrap">
-                    {user?.is_admin && (
-                      <>
-                        <button onClick={() => openEdit(printer)} className="hover:text-indigo-600 transition-colors">编辑</button>
-                        <button onClick={() => openQueue(printer)} className="hover:text-indigo-600 transition-colors">队列</button>
-                        <button onClick={() => openMaintenance(printer)} className="hover:text-indigo-600 transition-colors">维护</button>
-                        <button onClick={() => handleTestPage(printer.id)} className="hover:text-indigo-600 transition-colors">测试页</button>
-                        {!printer.is_default && (
-                          <button onClick={() => handleSetDefault(printer.id)} className="hover:text-indigo-600 transition-colors text-indigo-500 font-medium">设为默认</button>
-                        )}
-                      </>
+                {printer.capabilities && (
+                  <div className="flex flex-wrap gap-1.5 mt-auto mb-4">
+                    {printer.capabilities.split(/[,，]/).slice(0, 3).map((cap, i) => (
+                      <span key={i} className="text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                        {cap.trim()}
+                      </span>
+                    ))}
+                    {printer.capabilities.split(/[,，]/).length > 3 && (
+                      <span className="text-[10px] text-slate-400 px-1">+</span>
                     )}
                   </div>
-                </div>
+                )}
               </div>
-            </Card>
+
+              {/* Actions Footer */}
+              <div className="px-4 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-1">
+                {user?.is_admin ? (
+                  <>
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => openQueue(printer)}
+                        className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
+                        title="打印队列"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                      </button>
+                      <button
+                        onClick={() => openEdit(printer)}
+                        className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
+                        title="编辑设置"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                      </button>
+                      <button
+                        onClick={() => openMaintenance(printer)}
+                        className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
+                        title="维护记录"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                      </button>
+                    </div>
+
+                    <div className="flex gap-1 ml-auto">
+                      {!printer.is_default && (
+                        <button
+                          onClick={() => handleSetDefault(printer.id)}
+                          className="text-xs text-indigo-600 hover:text-indigo-800 font-medium px-2 py-1 rounded hover:bg-indigo-50 transition-colors"
+                        >
+                          设默认
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleTestPage(printer.id)}
+                        className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-md transition-colors"
+                        title="打印测试页"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <span className="text-xs text-slate-400 ml-auto">仅管理员可操作</span>
+                )}
+              </div>
+            </div>
           )
         })}
 
         {printers.length === 0 && (
-          <div className="col-span-full py-20 text-center bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
-            <p className="text-base font-medium text-slate-900">暂无打印机信息</p>
-            <p className="text-sm text-slate-500 mt-1">请尝试点击右上角的同步按钮获取设备列表</p>
+          <div className="col-span-full py-16 text-center bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 mb-4 text-slate-400">
+              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+            </div>
+            <p className="text-slate-900 font-medium">暂无设备</p>
+            <p className="text-slate-500 text-sm mt-1">点击右上角同步按钮获取打印机</p>
           </div>
         )}
       </div>
