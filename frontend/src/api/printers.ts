@@ -7,7 +7,17 @@ export interface Printer {
   location?: string
   alias?: string
   description?: string
+  capabilities?: string
   is_default: boolean
+  created_at: string
+}
+
+export interface MaintenanceLog {
+  id: number
+  printer_id: number
+  title: string
+  description?: string
+  cost: number
   created_at: string
 }
 
@@ -65,5 +75,19 @@ export const printersApi = {
 
   clearQueue: async (id: number): Promise<void> => {
     await apiClient.delete(`/printers/${id}/jobs`)
+  },
+
+  getMaintenanceLogs: async (id: number): Promise<MaintenanceLog[]> => {
+    const response = await apiClient.get<MaintenanceLog[]>(`/printers/${id}/maintenance`)
+    return response.data
+  },
+
+  addMaintenanceLog: async (id: number, data: { title: string, description?: string, cost?: number }): Promise<MaintenanceLog> => {
+    const response = await apiClient.post<MaintenanceLog>(`/printers/${id}/maintenance`, data)
+    return response.data
+  },
+
+  deleteMaintenanceLog: async (printerId: number, logId: number): Promise<void> => {
+    await apiClient.delete(`/printers/${printerId}/maintenance/${logId}`)
   },
 }

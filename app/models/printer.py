@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, String
+from sqlalchemy.orm import relationship
 
 from app.core.database import Base
 from app.core.time_utils import now_shanghai
@@ -16,4 +17,7 @@ class Printer(Base):
     location = Column(String(200), nullable=True)
     alias = Column(String(200), nullable=True)
     description = Column(String(500), nullable=True)
+    capabilities = Column(String(500), nullable=True)
     created_at = Column(DateTime(timezone=True), default=now_shanghai, nullable=False)
+
+    maintenance_logs = relationship("MaintenanceLog", back_populates="printer", cascade="all, delete-orphan")

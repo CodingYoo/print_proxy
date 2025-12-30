@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Card, Button, Badge, Modal, Input, Table } from '@/components/ui'
-import { printersApi, Printer, PrinterJob } from '@/api'
+import { printersApi, Printer, PrinterJob, MaintenanceLog } from '@/api'
 import { useAuthStore, useMessageStore } from '@/store'
 import { cn } from '@/lib/utils'
 
@@ -19,8 +19,14 @@ export function PrintersPage() {
   const [queueJobs, setQueueJobs] = useState<PrinterJob[]>([])
   const [loadingQueue, setLoadingQueue] = useState(false)
 
+  // Maintenance State
+  const [maintenancePrinter, setMaintenancePrinter] = useState<Printer | null>(null)
+  const [maintenanceLogs, setMaintenanceLogs] = useState<MaintenanceLog[]>([])
+  const [loadingMaintenance, setLoadingMaintenance] = useState(false)
+  const [maintenanceForm, setMaintenanceForm] = useState({ title: '', description: '', cost: 0 })
+
   // Edit Form State
-  const [editForm, setEditForm] = useState({ alias: '', location: '', description: '' })
+  const [editForm, setEditForm] = useState({ alias: '', location: '', description: '', capabilities: '' })
 
   const loadPrinters = async () => {
     try {
@@ -73,7 +79,8 @@ export function PrintersPage() {
     setEditForm({
       alias: printer.alias || '',
       location: printer.location || '',
-      description: printer.description || ''
+      description: printer.description || '',
+      capabilities: printer.capabilities || ''
     })
   }
 
@@ -111,6 +118,49 @@ export function PrintersPage() {
       showMessage('队列已清空', 'success')
     } catch {
       showMessage('清空失败', 'error')
+    }
+  }
+
+  // Maintenance Handlers
+  const openMaintenance = async (printer: Printer) => {
+    setMaintenancePrinter(printer)
+    setLoadingMaintenance(true)
+    try {
+      const logs = await printersApi.getMaintenanceLogs(printer.id)
+      setMaintenanceLogs(logs)
+      setMaintenanceForm({ title: '', description: '', cost: 0 })
+    } catch {
+      showMessage('获取维护记录失败', 'error')
+    } finally {
+      setLoadingMaintenance(false)
+    }
+  }
+
+  const handleCreateMaintenance = async () => {
+    if (!maintenancePrinter) return
+    if (!maintenanceForm.title) {
+      showMessage('请填写记录标题', 'error')
+      return
+    }
+    try {
+      await printersApi.addMaintenanceLog(maintenancePrinter.id, maintenanceForm)
+      const logs = await printersApi.getMaintenanceLogs(maintenancePrinter.id)
+      setMaintenanceLogs(logs)
+      setMaintenanceForm({ title: '', description: '', cost: 0 })
+      showMessage('记录添加成功', 'success')
+    } catch {
+      showMessage('添加失败', 'error')
+    }
+  }
+
+  const handleDeleteMaintenance = async (logId: number) => {
+    if (!maintenancePrinter) return
+    try {
+      await printersApi.deleteMaintenanceLog(maintenancePrinter.id, logId)
+      setMaintenanceLogs(maintenanceLogs.filter(l => l.id !== logId))
+      showMessage('记录已删除', 'success')
+    } catch {
+      showMessage('删除失败', 'error')
     }
   }
 
@@ -192,6 +242,15 @@ export function PrintersPage() {
                       {printer.location}
                     </p>
                   )}
+                  {printer.capabilities && (
+                    <div className="flex flex-wrap justify-center gap-1 mt-2 px-2">
+                      {printer.capabilities.split(/[,，]/).map((cap, i) => (
+                        <span key={i} className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-200">
+                          {cap.trim()}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="mt-6 pt-4 border-t border-slate-50 flex items-center justify-between text-xs text-slate-500">
@@ -200,6 +259,7 @@ export function PrintersPage() {
                       <>
                         <button onClick={() => openEdit(printer)} className="hover:text-indigo-600 transition-colors">编辑</button>
                         <button onClick={() => openQueue(printer)} className="hover:text-indigo-600 transition-colors">队列</button>
+                        <button onClick={() => openMaintenance(printer)} className="hover:text-indigo-600 transition-colors">维护</button>
                         <button onClick={() => handleTestPage(printer.id)} className="hover:text-indigo-600 transition-colors">测试页</button>
                       </>
                     )}
@@ -263,9 +323,89 @@ export function PrintersPage() {
               placeholder="备注信息"
             />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">能力标签 (用逗号分隔)</label>
+            <Input
+              value={editForm.capabilities}
+              onChange={(e) => setEditForm({ ...editForm, capabilities: e.target.value })}
+              placeholder="例如：自动双面, A3, 彩色"
+            />
+          </div>
           <div className="flex justify-end gap-2 pt-4 border-t border-slate-100 mt-4">
             <Button variant="outline" onClick={() => setEditingPrinter(null)}>取消</Button>
             <Button onClick={handleSaveEdit}>保存</Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Maintenance Modal */}
+      <Modal
+        open={!!maintenancePrinter}
+        onClose={() => setMaintenancePrinter(null)}
+        title={`维护记录 - ${maintenancePrinter?.alias || maintenancePrinter?.name}`}
+        className="max-w-4xl"
+      >
+        <div className="bg-white rounded-lg space-y-6">
+          <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+            <h4 className="text-sm font-bold text-slate-900 mb-3">新增记录</h4>
+            <div className="grid grid-cols-12 gap-3 items-end">
+              <div className="col-span-4">
+                <label className="block text-xs font-medium text-slate-500 mb-1">标题</label>
+                <Input
+                  value={maintenanceForm.title}
+                  onChange={e => setMaintenanceForm({ ...maintenanceForm, title: e.target.value })}
+                  placeholder="例如：更换黑色硒鼓"
+                />
+              </div>
+              <div className="col-span-4">
+                <label className="block text-xs font-medium text-slate-500 mb-1">描述</label>
+                <Input
+                  value={maintenanceForm.description}
+                  onChange={e => setMaintenanceForm({ ...maintenanceForm, description: e.target.value })}
+                  placeholder="备注细节"
+                />
+              </div>
+              <div className="col-span-2">
+                <label className="block text-xs font-medium text-slate-500 mb-1">费用 (元)</label>
+                <Input
+                  type="number"
+                  value={maintenanceForm.cost}
+                  onChange={e => setMaintenanceForm({ ...maintenanceForm, cost: parseFloat(e.target.value) || 0 })}
+                />
+              </div>
+              <div className="col-span-2">
+                <Button onClick={handleCreateMaintenance} className="w-full">添加</Button>
+              </div>
+            </div>
+          </div>
+
+          <div className="min-h-[200px]">
+            {loadingMaintenance ? (
+              <div className="flex items-center justify-center h-40">
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-indigo-500 border-t-transparent" />
+              </div>
+            ) : (
+              <Table<MaintenanceLog>
+                columns={[
+                  { key: 'created_at', title: '时间', width: '180px', render: (log) => new Date(log.created_at).toLocaleString() },
+                  { key: 'title', title: '项目', width: '200px', className: 'font-medium' },
+                  { key: 'description', title: '描述' },
+                  { key: 'cost', title: '费用', width: '100px', render: (log) => `¥${log.cost.toFixed(2)}` },
+                  {
+                    key: 'actions', title: '操作', width: '80px', render: (log) => (
+                      <button onClick={() => handleDeleteMaintenance(log.id)} className="text-red-500 hover:text-red-700 text-xs text-center w-full">删除</button>
+                    )
+                  }
+                ]}
+                data={maintenanceLogs}
+                rowKey="id"
+                emptyText="暂无维护记录"
+              />
+            )}
+          </div>
+
+          <div className="flex justify-end pt-4 border-t border-slate-100">
+            <Button variant="secondary" onClick={() => setMaintenancePrinter(null)}>关闭</Button>
           </div>
         </div>
       </Modal>

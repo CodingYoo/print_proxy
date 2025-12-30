@@ -25,8 +25,32 @@ class PrinterUpdate(BaseModel):
     location: Optional[str] = Field(default=None, max_length=200)
 
 
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MaintenanceLogBase(BaseModel):
+    title: str = Field(..., max_length=200)
+    description: Optional[str] = None
+    cost: float = 0.0
+
+
+class MaintenanceLogCreate(MaintenanceLogBase):
+    pass
+
+
+class MaintenanceLogRead(MaintenanceLogBase):
+    id: int
+    printer_id: int
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class PrinterRead(PrinterBase):
     id: int
     created_at: datetime
+    alias: Optional[str] = None
+    description: Optional[str] = None
+    capabilities: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
