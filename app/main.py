@@ -7,10 +7,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from fastapi import Request
+from fastapi.responses import JSONResponse
 from app.api import api_router
 from app.core.config import settings
 from app.core.database import Base, engine, session_scope
 from app.services import job_service, user_service
+from app.services.log_service import create_system_log
 from app.tasks.manager import job_queue
 from app.web import web_router
 
@@ -54,14 +57,36 @@ def create_application() -> FastAPI:
     def on_startup() -> None:
         os.makedirs(settings.log_directory, exist_ok=True)
         with session_scope() as db:
+            create_system_log(db, "info", "系统已启动", "system")
             user_service.ensure_default_admin(db)
             try:
                 from app.services import printer_service
-
                 printer_service.sync_printers(db)
-            except Exception:
-                pass
+            except Exception as e:
+                create_system_log(db, "error", f"打印机同步失败: {e}", "printer")
         job_queue.configure(job_service.process_print_job)
+
+    @app.on_event("shutdown")
+    def on_shutdown() -> None:
+        try:
+             with session_scope() as db:
+                create_system_log(db, "info", "系统正在关闭", "system")
+        except Exception:
+            pass
+
+    @app.exception_handler(Exception)
+    async def global_exception_handler(request: Request, exc: Exception):
+        try:
+            with session_scope() as db:
+                # 记录请求路径和方法
+                msg = f"未捕获的异常: {exc} (Path: {request.method} {request.url.path})"
+                create_system_log(db, "error", msg, "system")
+        except Exception:
+            pass # 避免死循环
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Internal Server Error"},
+        )
 
     return app
 

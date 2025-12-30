@@ -91,8 +91,12 @@ export function LogsPage() {
               className: 'text-slate-700 font-medium',
               render: (log) => (
                 <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    {log.category && <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 border border-slate-200">{log.category}</span>}
+                    {log.job_id && <span className="text-[10px] font-mono text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded">Job #{log.job_id}</span>}
+                  </div>
                   <p>{log.message}</p>
-                  <p className="text-[10px] text-slate-400 mt-0.5 font-mono">ID: {log.id} | Job: #{log.job_id}</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5 font-mono">ID: {log.id}</p>
                 </div>
               )
             },

@@ -2,7 +2,8 @@ import { apiClient } from './client'
 
 export interface LogEntry {
   id: number
-  job_id: number
+  job_id?: number
+  category?: string
   level: string
   message: string
   created_at: string

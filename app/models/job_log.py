@@ -10,7 +10,8 @@ class JobLog(Base):
     __tablename__ = "job_logs"
 
     id = Column(Integer, primary_key=True, index=True)
-    job_id = Column(Integer, ForeignKey("print_jobs.id", ondelete="CASCADE"), nullable=False, index=True)
+    job_id = Column(Integer, ForeignKey("print_jobs.id", ondelete="CASCADE"), nullable=True, index=True)
     level = Column(String(20), default="info")
+    category = Column(String(50), default="general")
     message = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), default=now_shanghai, nullable=False)
