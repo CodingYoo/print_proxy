@@ -181,8 +181,50 @@ def reprint_job(db: Session, job_id: int, owner_id: Optional[int]) -> PrintJob:
     return new_job
 
 
-def list_print_jobs(db: Session, skip: int = 0, limit: int = 20) -> List[PrintJob]:
-    return db.query(PrintJob).order_by(PrintJob.created_at.desc()).offset(skip).limit(limit).all()
+def batch_reprint_jobs(db: Session, job_ids: List[int], owner_id: Optional[int]) -> List[PrintJob]:
+    new_jobs = []
+    # 使用事务来保证批量操作的一致性
+    for job_id in job_ids:
+        try:
+            original_job = get_print_job(db, job_id)
+            
+            new_job = PrintJob(
+                title=f"{original_job.title} (重印)",
+                content=original_job.content,
+                file_type=original_job.file_type,
+                copies=original_job.copies,
+                priority=original_job.priority,
+                media_size=original_job.media_size,
+                color_mode=original_job.color_mode,
+                duplex=original_job.duplex,
+                fit_mode=original_job.fit_mode,
+                auto_rotate=original_job.auto_rotate,
+                enhance_quality=original_job.enhance_quality,
+                owner_id=owner_id,
+                printer_id=original_job.printer_id,
+            )
+            db.add(new_job)
+            db.flush() # 获取 ID 但不提交
+            
+            create_job_log(db, new_job.id, "info", f"批量重印 - 来源任务 #{original_job.id}")
+            job_queue.enqueue(new_job.id, new_job.priority)
+            new_jobs.append(new_job)
+        except Exception as e:
+            logger.error(f"批量重印任务 #{job_id} 失败: {e}")
+            # 继续处理其他任务，或者你可以选择在这里抛出异常以回滚
+            
+    db.commit()
+    return new_jobs
+
+
+def list_print_jobs(db: Session, skip: int = 0, limit: int = 20, q: Optional[str] = None) -> List[PrintJob]:
+    query = db.query(PrintJob)
+    if q:
+        search_term = f"%{q}%"
+        query = query.filter(
+            (PrintJob.title.ilike(search_term)) | (PrintJob.file_type.ilike(search_term))
+        )
+    return query.order_by(PrintJob.created_at.desc()).offset(skip).limit(limit).all()
 
 
 def get_print_job(db: Session, job_id: int) -> PrintJob:

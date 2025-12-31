@@ -30,8 +30,12 @@ export interface CreateJobParams {
 }
 
 export const jobsApi = {
-  list: async (skip = 0, limit = 100): Promise<PrintJob[]> => {
-    const response = await apiClient.get<PrintJob[]>(`/jobs/?skip=${skip}&limit=${limit}`)
+  list: async (skip = 0, limit = 100, q: string = ''): Promise<PrintJob[]> => {
+    let url = `/jobs/?skip=${skip}&limit=${limit}`
+    if (q) {
+      url += `&q=${encodeURIComponent(q)}`
+    }
+    const response = await apiClient.get<PrintJob[]>(url)
     return response.data
   },
 
@@ -52,6 +56,11 @@ export const jobsApi = {
 
   reprint: async (id: number): Promise<PrintJob> => {
     const response = await apiClient.post<PrintJob>(`/jobs/${id}/reprint`)
+    return response.data
+  },
+
+  batchReprint: async (ids: number[]): Promise<PrintJob[]> => {
+    const response = await apiClient.post<PrintJob[]>('/jobs/batch/reprint', ids)
     return response.data
   },
 

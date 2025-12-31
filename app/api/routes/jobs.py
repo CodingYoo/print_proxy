@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import base64
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
@@ -29,11 +29,32 @@ def create_job(
 def list_jobs(
     skip: int = 0,
     limit: int = 20,
+    q: Optional[str] = None,
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user),
 ) -> List[PrintJobRead]:
-    jobs = job_service.list_print_jobs(db, skip=skip, limit=limit)
+    jobs = job_service.list_print_jobs(db, skip=skip, limit=limit, q=q)
     return [PrintJobRead.from_orm(job) for job in jobs]
+
+
+@router.post("/batch/reprint", response_model=List[PrintJobRead])
+def batch_reprint(
+    job_ids: List[int],
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user),
+) -> List[PrintJobRead]:
+    if not job_ids:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="任务 ID 列表不能为空")
+        
+    # 权限检查：确保用户只能重印自己的任务（除非是管理员）
+    if not current_user.is_admin:
+        for job_id in job_ids:
+            job = job_service.get_print_job(db, job_id)
+            if job.owner_id != current_user.id:
+                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"没有权限重印任务 #{job_id}")
+
+    new_jobs = job_service.batch_reprint_jobs(db, job_ids, current_user.id)
+    return [PrintJobRead.from_orm(job) for job in new_jobs]
 
 
 @router.get("/{job_id}", response_model=PrintJobRead)
