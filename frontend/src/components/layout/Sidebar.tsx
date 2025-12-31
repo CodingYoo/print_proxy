@@ -43,9 +43,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       )}>
         {/* Brand */}
         <div className="h-16 flex items-center px-6 border-b border-slate-100">
-          <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold mr-3 shadow-sm shadow-indigo-200">
-            P
-          </div>
+          <img src="/logo.svg" alt="Logo" className="h-8 w-8 rounded-lg mr-3 shadow-sm shadow-indigo-200 bg-white" />
           <div>
             <h1 className="font-bold text-slate-900 tracking-tight">PrintProxy</h1>
             <p className="text-[10px] text-slate-500 font-medium tracking-wide">ENTERPRISE EDITION</p>

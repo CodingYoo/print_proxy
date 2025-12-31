@@ -36,9 +36,7 @@ export default function LoginPage() {
 
       <div className="relative w-full max-w-[400px] z-10 transition-all duration-700 animate-in fade-in zoom-in-95">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-200 mb-6 transform transition-transform hover:scale-110 duration-300">
-            <span className="text-2xl font-bold">P</span>
-          </div>
+          <img src="/logo.svg" alt="PrintProxy Logo" className="mx-auto block h-24 w-24 mb-6 transform transition-transform hover:scale-110 duration-300 rounded-2xl shadow-lg shadow-indigo-200 bg-white" />
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">欢迎回来</h1>
           <p className="text-slate-500 text-sm mt-2">请登录 PrintProxy 控制台以继续</p>
         </div>

@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4f46e5;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="15" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  
+  <rect x="0" y="0" width="512" height="512" rx="100" fill="url(#grad1)" />
+  
+  <!-- Printer Body -->
+  <path d="M126 190 h260 c20 0 36 16 36 36 v140 c0 20 -16 36 -36 36 h-260 c-20 0 -36 -16 -36 -36 v-140 c0 -20 16 -36 36 -36 z" fill="#ffffff" fill-opacity="0.2" />
+  <path d="M126 210 h260 c10 0 18 8 18 18 v100 c0 10 -8 18 -18 18 h-260 c-10 0 -18 -8 -18 -18 v-100 c0 -10 8 -18 18 -18 z" fill="#ffffff" />
+  
+  <!-- Paper slot/Sheet -->
+  <path d="M176 130 h160 c10 0 18 8 18 18 v42 h-196 v-42 c0 -10 8 -18 18 -18 z" fill="#e0e7ff" />
+  
+  <!-- Printed Paper coming out -->
+  <path d="M166 330 h180 v90 c0 10 -8 18 -18 18 h-144 c-10 0 -18 -8 -18 -18 v-90 z" fill="#ffffff" />
+  <rect x="196" y="360" width="120" height="15" rx="7.5" fill="#4f46e5" fill-opacity="0.8" />
+  <rect x="196" y="390" width="80" height="15" rx="7.5" fill="#4f46e5" fill-opacity="0.5" />
+
+  <!-- WiFi / Connectivity Signal -->
+  <circle cx="430" cy="110" r="12" fill="#ffffff" opacity="0.9" />
+  <path d="M400 130 a 50 50 0 0 1 60 0" stroke="#ffffff" stroke-width="12" stroke-linecap="round" fill="none" opacity="0.8" />
+  <path d="M380 150 a 80 80 0 0 1 100 0" stroke="#ffffff" stroke-width="12" stroke-linecap="round" fill="none" opacity="0.6" />
+  <path d="M360 170 a 110 110 0 0 1 140 0" stroke="#ffffff" stroke-width="12" stroke-linecap="round" fill="none" opacity="0.4" />
+
+</svg>
