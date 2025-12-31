@@ -61,7 +61,7 @@ export function OverviewPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: '在线打印机', value: printers.length, sub: defaultPrinter ? `默认: ${defaultPrinter.name}` : '未设置默认', icon: 'M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z', color: 'text-indigo-600', bg: 'bg-indigo-50' },
           { label: '打印次数', value: totalPrints, sub: `活跃中: ${processingJobs}`, icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4', color: 'text-violet-600', bg: 'bg-violet-50' },
@@ -93,29 +93,31 @@ export function OverviewPage() {
             <Link to="/dashboard/jobs" className="text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:underline">查看全部</Link>
           </div>
           <Card padding="none" className="overflow-hidden border-slate-200 shadow-sm">
-            <Table
-              data={jobs.slice(0, 5)}
-              rowKey="id"
-              className="border-0 rounded-none shadow-none"
-              columns={[
-                {
-                  title: '文件', key: 'title', className: 'w-[40%]', render: (job) => (
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500 uppercase flex-shrink-0">
-                        {job.file_type}
+            <div className="overflow-x-auto">
+              <Table
+                data={jobs.slice(0, 5)}
+                rowKey="id"
+                className="border-0 rounded-none shadow-none min-w-[600px]"
+                columns={[
+                  {
+                    title: '文件', key: 'title', className: 'w-[40%]', render: (job) => (
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500 uppercase flex-shrink-0">
+                          {job.file_type}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-medium text-slate-900 truncate max-w-[150px]">{job.title}</p>
+                          <p className="text-[10px] text-slate-400">{job.printer_name || '默认'}</p>
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <p className="font-medium text-slate-900 truncate max-w-[150px]">{job.title}</p>
-                        <p className="text-[10px] text-slate-400">{job.printer_name || '默认'}</p>
-                      </div>
-                    </div>
-                  )
-                },
-                { title: '状态', key: 'status', render: (job) => <Badge variant={statusVariant(job.status)}>{translateStatus(job.status)}</Badge> },
-                { title: '份数', key: 'copies', className: 'text-slate-500' },
-                { title: '时间', key: 'created_at', className: 'text-slate-400 text-xs', render: (job) => new Date(job.created_at).toLocaleTimeString() },
-              ]}
-            />
+                    )
+                  },
+                  { title: '状态', key: 'status', render: (job) => <Badge variant={statusVariant(job.status)}>{translateStatus(job.status)}</Badge> },
+                  { title: '份数', key: 'copies', className: 'text-slate-500' },
+                  { title: '时间', key: 'created_at', className: 'text-slate-400 text-xs', render: (job) => new Date(job.created_at).toLocaleTimeString() },
+                ]}
+              />
+            </div>
           </Card>
         </div>
 

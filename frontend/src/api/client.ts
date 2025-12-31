@@ -5,7 +5,7 @@ const TOKEN_KEY = 'pps_token'
 
 export const apiClient = axios.create({
   baseURL: API_PREFIX,
-  timeout: 30000,
+  timeout: 10000,
 })
 
 apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {

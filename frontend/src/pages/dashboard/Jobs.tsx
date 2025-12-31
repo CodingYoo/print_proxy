@@ -331,15 +331,18 @@ export function JobsPage() {
       </div>
 
       <Card padding="none" className="overflow-hidden border-slate-200">
-        <Table
-          columns={columns}
-          data={paginatedJobs}
-          rowKey="id"
-          loading={loading}
-          emptyText="暂无打印任务"
-          selectedKeys={selectedIds}
-          onSelectionChange={(keys) => setSelectedIds(keys as number[])}
-        />
+        <div className="overflow-x-auto">
+          <Table
+            columns={columns}
+            data={paginatedJobs}
+            rowKey="id"
+            loading={loading}
+            emptyText="暂无打印任务"
+            selectedKeys={selectedIds}
+            onSelectionChange={(keys) => setSelectedIds(keys as number[])}
+            className="min-w-[800px]"
+          />
+        </div>
 
         {/* Pagination */}
         <div className="px-4 py-3 border-t border-slate-100 flex items-center justify-between bg-slate-50/50">

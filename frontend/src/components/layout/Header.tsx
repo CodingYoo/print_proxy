@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 
@@ -16,6 +17,27 @@ const pathToName: Record<string, string> = {
 export function Header({ onMenuClick }: HeaderProps) {
   const location = useLocation()
   const pathSegments = location.pathname.split('/').filter(Boolean)
+  const [isOnline, setIsOnline] = useState(true)
+
+  useEffect(() => {
+    const checkStatus = async () => {
+      try {
+        // Assume API prefix is /api, check root endpoint for status
+        const res = await fetch('/api/')
+        if (res.ok) {
+          setIsOnline(true)
+        } else {
+          setIsOnline(false)
+        }
+      } catch {
+        setIsOnline(false)
+      }
+    }
+
+    checkStatus() // Initial check
+    const timer = setInterval(checkStatus, 30000) // Poll every 30s
+    return () => clearInterval(timer)
+  }, [])
 
   // Generate breadcrumbs
   const breadcrumbs = pathSegments.map((segment, index) => {
@@ -62,12 +84,26 @@ export function Header({ onMenuClick }: HeaderProps) {
 
       <div className="flex items-center gap-4">
         {/* Status Indicator */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-100">
+        <div className={cn(
+          "flex items-center gap-2 px-3 py-1.5 rounded-full border transition-colors",
+          isOnline ? "bg-emerald-50 border-emerald-100" : "bg-rose-50 border-rose-100"
+        )}>
           <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            <span className={cn(
+              "animate-ping absolute inline-flex h-full w-full rounded-full opacity-75",
+              isOnline ? "bg-emerald-400" : "bg-rose-400"
+            )}></span>
+            <span className={cn(
+              "relative inline-flex rounded-full h-2 w-2",
+              isOnline ? "bg-emerald-500" : "bg-rose-500"
+            )}></span>
           </span>
-          <span className="text-xs font-semibold text-emerald-700">Service Active</span>
+          <span className={cn(
+            "text-xs font-semibold",
+            isOnline ? "text-emerald-700" : "text-rose-700"
+          )}>
+            {isOnline ? "服务正常" : "服务异常"}
+          </span>
         </div>
       </div>
     </header>
