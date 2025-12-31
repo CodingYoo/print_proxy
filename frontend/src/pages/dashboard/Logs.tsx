@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Badge, Select, Button, Table } from '@/components/ui'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { logsApi, jobsApi, LogEntry, PrintJob } from '@/api'
 import { useMessageStore } from '@/store'
 
@@ -34,8 +35,10 @@ export function LogsPage() {
     }
   }
 
+  const [showClearConfirm, setShowClearConfirm] = useState(false)
+
   const handleClearAll = async () => {
-    if (!confirm('确定清空所有日志吗？此操作不可恢复。')) return
+    setShowClearConfirm(false)
     try {
       await logsApi.clearAll()
       await loadData()
@@ -61,7 +64,7 @@ export function LogsPage() {
           <div className="w-36">
             <Select value={jobFilter} onChange={(e) => { setJobFilter(e.target.value); setPage(1) }} options={[{ value: '', label: '全部任务' }, ...jobs.map((j) => ({ value: String(j.id), label: `#${j.id} ${j.title}` }))]} />
           </div>
-          <Button size="sm" variant="ghost" className="text-rose-500 hover:text-rose-600 hover:bg-rose-50" onClick={handleClearAll}>
+          <Button size="sm" variant="ghost" className="text-rose-500 hover:text-rose-600 hover:bg-rose-50" onClick={() => setShowClearConfirm(true)}>
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
             全部清空
           </Button>
@@ -124,6 +127,15 @@ export function LogsPage() {
           </div>
         </div>
       )}
+      <ConfirmDialog
+        open={showClearConfirm}
+        onClose={() => setShowClearConfirm(false)}
+        onConfirm={handleClearAll}
+        title="清空日志"
+        message="确定清空所有日志吗？此操作不可恢复。"
+        confirmText="确认清空"
+        danger
+      />
     </div>
   )
 }

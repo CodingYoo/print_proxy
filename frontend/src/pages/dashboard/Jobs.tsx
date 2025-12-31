@@ -1,5 +1,6 @@
 import { useEffect, useState, FormEvent } from 'react'
 import { Card, Button, Badge, Input, Select, Modal, Table } from '@/components/ui'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { jobsApi, printersApi, PrintJob, Printer, CreateJobParams } from '@/api'
 import { useMessageStore } from '@/store'
 
@@ -46,37 +47,65 @@ export function JobsPage() {
 
   useEffect(() => { loadData() }, [])
 
-  const handleCancel = async (id: number) => {
-    if (!confirm('确定取消该任务吗？')) return
-    try {
-      await jobsApi.cancel(id)
-      await loadData()
-      showMessage('已取消', 'success')
-    } catch {
-      showMessage('取消失败', 'error')
-    }
+  const [confirmConfig, setConfirmConfig] = useState<{
+    open: boolean
+    title: string
+    message: string
+    onConfirm: () => Promise<void>
+    danger?: boolean
+  }>({ open: false, title: '', message: '', onConfirm: async () => { } })
+
+  const handleCancel = (id: number) => {
+    setConfirmConfig({
+      open: true,
+      title: '取消任务',
+      message: '确定取消该任务吗？',
+      onConfirm: async () => {
+        try {
+          await jobsApi.cancel(id)
+          await loadData()
+          showMessage('已取消', 'success')
+        } catch {
+          showMessage('取消失败', 'error')
+        }
+      }
+    })
   }
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('确定删除该任务吗？此操作不可恢复。')) return
-    try {
-      await jobsApi.deleteJob(id)
-      await loadData()
-      showMessage('已删除', 'success')
-    } catch {
-      showMessage('删除失败', 'error')
-    }
+  const handleDelete = (id: number) => {
+    setConfirmConfig({
+      open: true,
+      title: '删除任务',
+      message: '确定删除该任务吗？此操作不可恢复。',
+      danger: true,
+      onConfirm: async () => {
+        try {
+          await jobsApi.deleteJob(id)
+          await loadData()
+          showMessage('已删除', 'success')
+        } catch {
+          showMessage('删除失败', 'error')
+        }
+      }
+    })
   }
 
-  const handleClearAll = async () => {
-    if (!confirm('确定清空所有打印任务吗？此操作不可恢复。')) return
-    try {
-      await jobsApi.clearAll()
-      await loadData()
-      showMessage('已清空所有任务', 'success')
-    } catch {
-      showMessage('清空失败', 'error')
-    }
+  const handleClearAll = () => {
+    setConfirmConfig({
+      open: true,
+      title: '清空所有任务',
+      message: '确定清空所有打印任务吗？此操作不可恢复。',
+      danger: true,
+      onConfirm: async () => {
+        try {
+          await jobsApi.clearAll()
+          await loadData()
+          showMessage('已清空所有任务', 'success')
+        } catch {
+          showMessage('清空失败', 'error')
+        }
+      }
+    })
   }
 
   const handlePreview = async (id: number, fileType: string) => {
@@ -312,6 +341,15 @@ export function JobsPage() {
           </div>
         )}
       </Modal>
+
+      <ConfirmDialog
+        open={confirmConfig.open}
+        onClose={() => setConfirmConfig({ ...confirmConfig, open: false })}
+        onConfirm={confirmConfig.onConfirm}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        danger={confirmConfig.danger}
+      />
     </div>
   )
 }

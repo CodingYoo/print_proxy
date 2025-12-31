@@ -1,9 +1,10 @@
+
 import { useState, FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore, useMessageStore } from '@/store'
-import { Button, Input, Card } from '@/components/ui'
+import { Input, Button, Card } from '@/components/ui'
 
-export function LoginPage() {
+export default function LoginPage() {
   const navigate = useNavigate()
   const { login } = useAuthStore()
   const { showMessage } = useMessageStore()
@@ -67,7 +68,7 @@ export function LoginPage() {
                   fullWidth
                 />
                 <div className="flex justify-end">
-                  <button type="button" className="text-xs font-medium text-indigo-600 hover:text-indigo-700" onClick={() => alert('请联系管理员重置密码')}>
+                  <button type="button" className="text-xs font-medium text-indigo-600 hover:text-indigo-700" onClick={() => showMessage('请联系管理员重置密码', 'info')}>
                     忘记密码?
                   </button>
                 </div>
