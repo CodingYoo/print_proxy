@@ -73,6 +73,19 @@ def cancel_job(
     return PrintJobRead.from_orm(job)
 
 
+@router.post("/{job_id}/reprint", response_model=PrintJobRead)
+def reprint_job(
+    job_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user),
+) -> PrintJobRead:
+    job = job_service.get_print_job(db, job_id)
+    if current_user.id != job.owner_id and not current_user.is_admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="没有权限重印此任务")
+    new_job = job_service.reprint_job(db, job_id, current_user.id)
+    return PrintJobRead.from_orm(new_job)
+
+
 @router.delete("/", status_code=status.HTTP_204_NO_CONTENT)
 def clear_jobs(
     db: Session = Depends(deps.get_db),

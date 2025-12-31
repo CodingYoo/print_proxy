@@ -154,6 +154,33 @@ def create_print_job(db: Session, job_in: PrintJobCreate, owner_id: Optional[int
     return job
 
 
+def reprint_job(db: Session, job_id: int, owner_id: Optional[int]) -> PrintJob:
+    original_job = get_print_job(db, job_id)
+    
+    new_job = PrintJob(
+        title=f"{original_job.title} (重印)",
+        content=original_job.content,
+        file_type=original_job.file_type,
+        copies=original_job.copies,
+        priority=original_job.priority,
+        media_size=original_job.media_size,
+        color_mode=original_job.color_mode,
+        duplex=original_job.duplex,
+        fit_mode=original_job.fit_mode,
+        auto_rotate=original_job.auto_rotate,
+        enhance_quality=original_job.enhance_quality,
+        owner_id=owner_id,
+        printer_id=original_job.printer_id,
+    )
+    db.add(new_job)
+    db.commit()
+    db.refresh(new_job)
+
+    create_job_log(db, new_job.id, "info", f"从任务 #{original_job.id} 重印")
+    job_queue.enqueue(new_job.id, new_job.priority)
+    return new_job
+
+
 def list_print_jobs(db: Session, skip: int = 0, limit: int = 20) -> List[PrintJob]:
     return db.query(PrintJob).order_by(PrintJob.created_at.desc()).offset(skip).limit(limit).all()
 

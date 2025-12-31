@@ -253,18 +253,24 @@ export function PrintersPage() {
               )}
             >
               {/* Header Status Bar */}
-              <div className="px-4 py-3 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
+              <div className={cn(
+                "px-4 py-3 border-b flex items-center justify-between",
+                hasError ? "bg-red-50 border-red-100" : "bg-slate-50/50 border-slate-50"
+              )}>
                 <div className="flex items-center gap-2">
                   <span className={cn(
-                    "flex h-2.5 w-2.5 rounded-full ring-2 ring-white",
-                    hasError ? "bg-red-500" : (isOnline ? "bg-emerald-500" : "bg-slate-300")
+                    "flex h-2.5 w-2.5 rounded-full ring-2 ring-white shrink-0",
+                    hasError ? "bg-red-500 animate-pulse" : (isOnline ? "bg-emerald-500" : "bg-slate-300")
                   )} />
-                  <span className={cn("text-xs font-medium", hasError ? "text-red-600" : "text-slate-600")}>
+                  <span className={cn(
+                    "text-xs font-bold truncate max-w-[150px]",
+                    hasError ? "text-red-700" : "text-slate-600"
+                  )} title={statusText}>
                     {statusText}
                   </span>
                 </div>
                 {printer.is_default && (
-                  <Badge variant="default" className="text-[10px] h-5 px-2 bg-indigo-600 border-none shadow-none">
+                  <Badge variant="default" className="text-[10px] h-5 px-2 bg-indigo-600 border-none shadow-none shrink-0">
                     默认
                   </Badge>
                 )}

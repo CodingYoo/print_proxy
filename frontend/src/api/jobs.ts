@@ -50,6 +50,11 @@ export const jobsApi = {
     return response.data
   },
 
+  reprint: async (id: number): Promise<PrintJob> => {
+    const response = await apiClient.post<PrintJob>(`/jobs/${id}/reprint`)
+    return response.data
+  },
+
   getPreview: async (id: number): Promise<Blob> => {
     const response = await apiClient.get(`/jobs/${id}/preview`, { responseType: 'blob' })
     return response.data

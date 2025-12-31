@@ -72,6 +72,23 @@ export function JobsPage() {
     })
   }
 
+  const handleReprint = (id: number) => {
+    setConfirmConfig({
+      open: true,
+      title: '重新打印',
+      message: '确定要重新打印此任务吗？这将创建一个包含相同内容的新任务。',
+      onConfirm: async () => {
+        try {
+          await jobsApi.reprint(id)
+          await loadData()
+          showMessage('重印任务已创建', 'success')
+        } catch {
+          showMessage('重印失败', 'error')
+        }
+      }
+    })
+  }
+
   const handleDelete = (id: number) => {
     setConfirmConfig({
       open: true,
@@ -232,6 +249,9 @@ export function JobsPage() {
         <div className="flex items-center justify-end gap-1">
           <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); handlePreview(job.id, job.file_type) }} title="预览">
             <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+          </Button>
+          <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); handleReprint(job.id) }} title="重印">
+            <svg className="w-4 h-4 text-slate-500 hover:text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
           </Button>
           {['queued', 'processing'].includes(job.status) && (
             <Button size="icon" variant="ghost" className="text-rose-500 hover:text-rose-600 hover:bg-rose-50" onClick={(e) => { e.stopPropagation(); handleCancel(job.id) }} title="取消">
