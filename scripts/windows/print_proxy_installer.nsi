@@ -55,8 +55,7 @@ Section "Install"
   CreateDirectory "$INSTDIR\app"
   CreateDirectory "$INSTDIR\app\templates"
   SetOutPath "$INSTDIR\app\templates"
-  File "${TEMPLATES_DIR}\dashboard.html"
-  File "${TEMPLATES_DIR}\login.html"
+  File /nonfatal "${TEMPLATES_DIR}\*.html"
   SetOutPath "$INSTDIR"
   
   ; Create shortcuts
