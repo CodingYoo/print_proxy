@@ -211,30 +211,55 @@ try {
     $env:PYTHONDONTWRITEBYTECODE = "1"
     $env:PYTHONPYCACHEPREFIX = $null
     
+    # Check if icon exists, if not create it
+    $iconPath = Join-Path $projectRoot 'icon.ico'
+    if (-not (Test-Path $iconPath)) {
+        Write-Info "Creating application icon..."
+        $createIconScript = Join-Path $projectRoot 'create_icon.py'
+        if (Test-Path $createIconScript) {
+            & $pythonExe $createIconScript
+            Write-Success "Icon created"
+        } else {
+            Write-Warning "Icon creation script not found, using default icon"
+        }
+    }
+    
     $pyInstallerExe = Join-Path $venvPath 'Scripts\pyinstaller.exe'
-    $args = @(
-        '--clean',
-        '--noconfirm',
-        '--onefile',
-        '--noconsole',
-        '--name', 'PrintProxy',
-        '--paths', $projectRoot,
-        '--collect-all', 'pywin32',
-        '--collect-all', 'uvicorn',
-        '--collect-all', 'jinja2',
-
-        '--collect-submodules', 'app',
-        '--hidden-import', 'app.main',
-        '--hidden-import', 'passlib.handlers.bcrypt',
-        '--hidden-import', 'win32timezone',
-
-        '--add-data', "app\templates;app\templates",
-        '--add-data', "app\static;app\static",
-        'scripts\windows\run_app.py'
-    )
-
-    # Run PyInstaller and show progress
-    & $pyInstallerExe @args
+    
+    # Check if spec file exists
+    $specFile = Join-Path $projectRoot 'PrintProxy.spec'
+    if (Test-Path $specFile) {
+        Write-Info "Using existing spec file with icon..."
+        & $pyInstallerExe --clean --noconfirm $specFile
+    } else {
+        Write-Info "Generating new spec file with icon..."
+        $args = @(
+            '--clean',
+            '--noconfirm',
+            '--onefile',
+            '--noconsole',
+            '--name', 'PrintProxy',
+            '--paths', $projectRoot,
+            '--collect-all', 'pywin32',
+            '--collect-all', 'uvicorn',
+            '--collect-all', 'jinja2',
+            '--collect-submodules', 'app',
+            '--hidden-import', 'app.main',
+            '--hidden-import', 'passlib.handlers.bcrypt',
+            '--hidden-import', 'win32timezone',
+            '--add-data', "app\templates;app\templates",
+            '--add-data', "app\static;app\static"
+        )
+        
+        # Add icon if it exists
+        if (Test-Path $iconPath) {
+            $args += '--icon', $iconPath
+        }
+        
+        $args += 'scripts\windows\run_app.py'
+        
+        & $pyInstallerExe @args
+    }
     
     Write-Host ""
     

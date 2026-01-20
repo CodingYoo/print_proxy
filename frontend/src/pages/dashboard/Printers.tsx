@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react'
-import { Card, Button, Badge, Modal, Input, Table } from '@/components/ui'
+import { Button, Badge, Modal, Input, Table } from '@/components/ui'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { printersApi, Printer, PrinterJob, MaintenanceLog, PrinterStatus } from '@/api'
 import { useAuthStore, useMessageStore } from '@/store'

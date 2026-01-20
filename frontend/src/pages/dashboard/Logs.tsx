@@ -1,16 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Badge, Select, Button, Table } from '@/components/ui'
+import { Select, Button, Table } from '@/components/ui'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { logsApi, jobsApi, LogEntry, PrintJob } from '@/api'
 import { useMessageStore } from '@/store'
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
-}
-
-function levelVariant(level: string): 'success' | 'error' | 'warning' | 'info' | 'default' {
-  const map: Record<string, 'success' | 'error' | 'warning' | 'info'> = { info: 'info', warning: 'warning', error: 'error' }
-  return map[level] || 'default'
 }
 
 export function LogsPage() {
