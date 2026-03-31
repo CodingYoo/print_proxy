@@ -31,7 +31,7 @@ class PrintJobBase(BaseModel):
     printer_name: Optional[str] = Field(default=None, max_length=200)
     dpi: Optional[int] = Field(default=203, ge=72, le=1200)  # 默认 203 DPI
     fit_mode: Optional[str] = Field(default="fill", max_length=20)  # fill=填满, contain=完整显示
-    auto_rotate: Optional[bool] = Field(default=True)  # 自动旋转以最佳适配纸张
+    auto_rotate: Optional[bool] = Field(default=False)  # 自动旋转以最佳适配纸张
     enhance_quality: Optional[bool] = Field(default=True)  # 增强打印质量（锐化、对比度优化）
 
 

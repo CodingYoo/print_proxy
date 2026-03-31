@@ -82,3 +82,5 @@ test_*.db
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+.history/*
